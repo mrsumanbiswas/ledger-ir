@@ -6,6 +6,7 @@ S3 key or DynamoDB key (no auth by design for the challenge demo).
 """
 from __future__ import annotations
 
+import hmac
 import json
 import os
 import re
@@ -21,6 +22,10 @@ _table = boto3.resource("dynamodb").Table(os.environ["TABLE_NAME"])
 _DOCS_BUCKET = os.environ["DOCS_BUCKET"]
 _DOSSIER_BUCKET = os.environ["DOSSIER_BUCKET"]
 _STATE_MACHINE_ARN = os.environ["STATE_MACHINE_ARN"]
+# Injected by the edge proxy at https://ledgerir.sumanbiswas.in; requests that
+# did not pass through the site's own domain are rejected. Fails closed if the
+# env var is ever unset.
+_API_KEY = os.environ.get("API_SHARED_KEY", "")
 
 _SEED_DIR = Path(__file__).parent / "seed_data"
 _SEED_TENANT, _SEED_PERIOD = "demo", "2026-10"
@@ -35,7 +40,8 @@ _FILENAME_RE = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
 def _response(status: int, body: dict) -> dict:
     return {"statusCode": status,
             "headers": {"content-type": "application/json",
-                        "access-control-allow-origin": "*"},
+                        "access-control-allow-origin":
+                            "https://ledgerir.sumanbiswas.in"},
             "body": json.dumps(body, default=str)}
 
 
@@ -184,6 +190,9 @@ _ROUTES = {
 
 
 def lambda_handler(event, _context):
+    supplied = (event.get("headers") or {}).get("x-ledgerir-key", "")
+    if not _API_KEY or not hmac.compare_digest(supplied, _API_KEY):
+        return _response(403, {"error": "forbidden"})
     http = event["requestContext"]["http"]
     route = (http["method"], event["rawPath"])
     handler = _ROUTES.get(route)

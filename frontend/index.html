@@ -130,7 +130,7 @@
 </div>
 
 <script>
-const API = "https://j2nk4tg5jl.execute-api.ap-south-1.amazonaws.com";
+const API = "/api";  // same-origin; the edge proxy forwards to API Gateway
 const TENANT = "demo", PERIOD = "2026-10";
 const inr = p => "₹" + new Intl.NumberFormat("en-IN",
   {minimumFractionDigits: 2}).format(p / 100);

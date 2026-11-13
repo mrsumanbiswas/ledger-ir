@@ -13,6 +13,13 @@ Parameters:
       Optional custom hostname for the dashboard (e.g. ledgerir.example.com).
       When set, the frontend bucket is named exactly this so a Cloudflare
       proxied CNAME to the S3 website endpoint routes by Host header.
+  ApiSharedKey:
+    Type: String
+    NoEcho: true
+    Description: >
+      Shared secret the edge proxy injects as x-ledgerir-key; the API rejects
+      every request without it, so only traffic that passed through the
+      site's own domain reaches the handlers.
 
 Conditions:
   HasFrontendHostname: !Not [!Equals [!Ref FrontendHostname, '']]
@@ -132,6 +139,7 @@ Resources:
       Environment:
         Variables:
           STATE_MACHINE_ARN: !Ref ReconcilePipeline
+          API_SHARED_KEY: !Ref ApiSharedKey
       Policies:
         - DynamoDBReadPolicy: { TableName: !Ref LedgerTable }
         - S3CrudPolicy: { BucketName: !Ref DocsBucket }
@@ -170,9 +178,12 @@ Resources:
     Type: AWS::Serverless::HttpApi
     Properties:
       CorsConfiguration:
-        AllowOrigins: ['*']
+        AllowOrigins: ['https://ledgerir.sumanbiswas.in']
         AllowMethods: [GET, POST, OPTIONS]
-        AllowHeaders: ['content-type']
+        AllowHeaders: ['content-type', 'x-ledgerir-key']
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 20
+        ThrottlingRateLimit: 10
 
   # ---------------------------------------------------------- orchestration
   ReconcilePipeline:

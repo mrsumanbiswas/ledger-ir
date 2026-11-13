@@ -8,8 +8,9 @@ Problem" (Nov 2026).
 **Write-up:** [WRITEUP.md](WRITEUP.md)
 
 (The dashboard is hosted on the project's S3 static site; the custom domain is a
-thin HTTPS front on the author's own DNS. The S3 website URL in the stack
-outputs serves the identical page.)
+thin HTTPS front on the author's own DNS, and it is the only working entry
+point: the API is origin-locked, so the raw S3/API URLs serve 403s or an inert
+page shell by design.)
 
 LedgerIR treats messy MSME paperwork — supplier invoice photos, GSTR-2B JSON,
 bank statement CSVs — as **untrusted source code** and runs it through a
@@ -55,6 +56,14 @@ exact format the tokenizer emits, including the deliberate low-confidence
 misread), and the pipeline's Choice state routes `*_tokens.json` around the OCR
 stage; the placeholder OCR Lambda fails loudly rather than pretending.
 Everything downstream of tokens is fully real and running.
+
+**Security posture:** the API accepts only requests carrying a shared secret
+injected by the site's edge proxy (fail-closed, constant-time compare), so
+every route is reachable solely through https://ledgerir.sumanbiswas.in; CORS
+is pinned to that origin, API Gateway throttles at 10 rps / burst 20, the page
+ships a strict CSP and security headers, all document access is via short-lived
+presigned URLs, inputs are validated against strict patterns, and audit
+dossiers sit under S3 Object Lock in compliance mode.
 
 - [SPEC.md](SPEC.md) — data contracts (JSON Schemas), domain rules, and the
   golden-sample assertions the tests enforce.
