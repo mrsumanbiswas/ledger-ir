@@ -1,0 +1,72 @@
+{
+  "period": "2026-10",
+  "buyer_gstin": "32FGHIJ5678K1ZA",
+  "generated_on": "2026-11-14",
+  "records": [
+    {
+      "doc_type": "INV",
+      "inv_no": "INV-881",
+      "inv_date": "2026-10-05",
+      "supplier_gstin": "24ABCDE1234F1Z6",
+      "supplier_name": "SHREE GANESH STEELS",
+      "place_of_supply": "32",
+      "taxable_value_paise": 5000000,
+      "rate_bps": 1800,
+      "cgst_paise": 0,
+      "sgst_paise": 0,
+      "igst_paise": 900000,
+      "cess_paise": 0,
+      "total_paise": 5900000,
+      "itc_available": true
+    },
+    {
+      "doc_type": "INV",
+      "inv_no": "INV-882",
+      "inv_date": "2026-10-18",
+      "supplier_gstin": "24ABCDE1234F1Z6",
+      "supplier_name": "SHREE GANESH STEELS",
+      "place_of_supply": "32",
+      "taxable_value_paise": 4000000,
+      "rate_bps": 1800,
+      "cgst_paise": 360000,
+      "sgst_paise": 360000,
+      "igst_paise": 0,
+      "cess_paise": 0,
+      "total_paise": 4720000,
+      "itc_available": true
+    },
+    {
+      "doc_type": "INV",
+      "inv_no": "INV-883",
+      "inv_date": "2026-10-22",
+      "supplier_gstin": "24ABCDE1234F1Z6",
+      "supplier_name": "SHREE GANESH STEELS",
+      "place_of_supply": "32",
+      "taxable_value_paise": 3000000,
+      "rate_bps": 1800,
+      "cgst_paise": 0,
+      "sgst_paise": 0,
+      "igst_paise": 540000,
+      "cess_paise": 0,
+      "total_paise": 3540000,
+      "itc_available": true
+    },
+    {
+      "doc_type": "CDN",
+      "inv_no": "CN-12",
+      "inv_date": "2026-10-25",
+      "supplier_gstin": "24ABCDE1234F1Z6",
+      "supplier_name": "SHREE GANESH STEELS",
+      "place_of_supply": "32",
+      "taxable_value_paise": 100000,
+      "rate_bps": 1800,
+      "cgst_paise": 0,
+      "sgst_paise": 0,
+      "igst_paise": 18000,
+      "cess_paise": 0,
+      "total_paise": 118000,
+      "itc_available": true,
+      "original_inv_no": "INV-881"
+    }
+  ]
+}

@@ -223,6 +223,19 @@ def write_bank_csv() -> None:
         w.writerows(rows)
 
 
+SEED_DIR = ROOT / "functions" / "api_handler" / "seed_data"
+SEED_FILES = ("invoice_882_flawed.png", "invoice_882_tokens.json",
+              "gstr2b_oct2026.json", "bank_oct2026.csv")
+
+
+def sync_seed_data() -> None:
+    """The /demo-seed endpoint bundles its own byte-identical copy of the
+    fixtures (Lambda cannot read the repo); tests enforce the sync."""
+    SEED_DIR.mkdir(parents=True, exist_ok=True)
+    for name in SEED_FILES:
+        (SEED_DIR / name).write_bytes((OUT / name).read_bytes())
+
+
 def main() -> None:
     OUT.mkdir(exist_ok=True)
     assert gstin_check("27AAPFU0939F1ZV") == "V"
@@ -231,7 +244,8 @@ def main() -> None:
     write_invoice_fixtures()
     write_gstr2b()
     write_bank_csv()
-    print("fixtures written to", OUT)
+    sync_seed_data()
+    print("fixtures written to", OUT, "and synced to", SEED_DIR)
     print("supplier:", SUPPLIER_GSTIN, "| buyer:", BUYER_GSTIN)
 
 

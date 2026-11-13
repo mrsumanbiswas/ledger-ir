@@ -1,0 +1,359 @@
+{
+  "image": "invoice_882_flawed.png",
+  "width": 1000,
+  "height": 1400,
+  "engine": "precomputed-fixture",
+  "tokens": [
+    {
+      "index": 0,
+      "x": 380,
+      "y": 47,
+      "w": 241,
+      "h": 25,
+      "text": "TAX INVOICE",
+      "conf": 0.97
+    },
+    {
+      "index": 1,
+      "x": 60,
+      "y": 114,
+      "w": 264,
+      "h": 15,
+      "text": "SHREE GANESH STEELS",
+      "conf": 0.97
+    },
+    {
+      "index": 2,
+      "x": 640,
+      "y": 114,
+      "w": 197,
+      "h": 15,
+      "text": "Invoice No: INV-882",
+      "conf": 0.97
+    },
+    {
+      "index": 3,
+      "x": 60,
+      "y": 146,
+      "w": 428,
+      "h": 19,
+      "text": "Plot 14, GIDC Estate, Vapi, Gujarat 396195",
+      "conf": 0.97
+    },
+    {
+      "index": 4,
+      "x": 640,
+      "y": 146,
+      "w": 177,
+      "h": 15,
+      "text": "Date: 18-10-2026",
+      "conf": 0.97
+    },
+    {
+      "index": 5,
+      "x": 60,
+      "y": 178,
+      "w": 270,
+      "h": 15,
+      "text": "GSTIN: 24ABCDE1234F1Z6",
+      "conf": 0.97
+    },
+    {
+      "index": 6,
+      "x": 60,
+      "y": 238,
+      "w": 94,
+      "h": 15,
+      "text": "BILL TO:",
+      "conf": 0.97
+    },
+    {
+      "index": 7,
+      "x": 60,
+      "y": 270,
+      "w": 241,
+      "h": 15,
+      "text": "MALABAR FABRICATORS",
+      "conf": 0.97
+    },
+    {
+      "index": 8,
+      "x": 580,
+      "y": 270,
+      "w": 276,
+      "h": 19,
+      "text": "Place of Supply: 32-KERALA",
+      "conf": 0.97
+    },
+    {
+      "index": 9,
+      "x": 60,
+      "y": 302,
+      "w": 495,
+      "h": 18,
+      "text": "Door 8/112, Industrial Area, Kochi, Kerala 682001",
+      "conf": 0.97
+    },
+    {
+      "index": 10,
+      "x": 60,
+      "y": 334,
+      "w": 258,
+      "h": 19,
+      "text": "GSTIN: 32FGHIJ5678K1ZA",
+      "conf": 0.97
+    },
+    {
+      "index": 11,
+      "x": 60,
+      "y": 390,
+      "w": 21,
+      "h": 15,
+      "text": "Sl",
+      "conf": 0.97
+    },
+    {
+      "index": 12,
+      "x": 110,
+      "y": 390,
+      "w": 129,
+      "h": 19,
+      "text": "Description",
+      "conf": 0.97
+    },
+    {
+      "index": 13,
+      "x": 470,
+      "y": 390,
+      "w": 48,
+      "h": 15,
+      "text": "HSN",
+      "conf": 0.97
+    },
+    {
+      "index": 14,
+      "x": 580,
+      "y": 390,
+      "w": 40,
+      "h": 19,
+      "text": "Qty",
+      "conf": 0.97
+    },
+    {
+      "index": 15,
+      "x": 700,
+      "y": 390,
+      "w": 52,
+      "h": 15,
+      "text": "Rate",
+      "conf": 0.97
+    },
+    {
+      "index": 16,
+      "x": 860,
+      "y": 390,
+      "w": 89,
+      "h": 15,
+      "text": "Amount",
+      "conf": 0.97
+    },
+    {
+      "index": 17,
+      "x": 60,
+      "y": 424,
+      "w": 13,
+      "h": 15,
+      "text": "1",
+      "conf": 0.97
+    },
+    {
+      "index": 18,
+      "x": 110,
+      "y": 424,
+      "w": 180,
+      "h": 15,
+      "text": "MS Steel Brackets",
+      "conf": 0.97
+    },
+    {
+      "index": 19,
+      "x": 470,
+      "y": 424,
+      "w": 48,
+      "h": 15,
+      "text": "7308",
+      "conf": 0.97
+    },
+    {
+      "index": 20,
+      "x": 580,
+      "y": 424,
+      "w": 24,
+      "h": 15,
+      "text": "10",
+      "conf": 0.97
+    },
+    {
+      "index": 21,
+      "x": 664,
+      "y": 424,
+      "w": 96,
+      "h": 17,
+      "text": "2,500.00",
+      "conf": 0.97
+    },
+    {
+      "index": 22,
+      "x": 822,
+      "y": 424,
+      "w": 108,
+      "h": 17,
+      "text": "25,000.00",
+      "conf": 0.97
+    },
+    {
+      "index": 23,
+      "x": 60,
+      "y": 460,
+      "w": 13,
+      "h": 15,
+      "text": "2",
+      "conf": 0.97
+    },
+    {
+      "index": 24,
+      "x": 110,
+      "y": 460,
+      "w": 147,
+      "h": 19,
+      "text": "Mounting Rails",
+      "conf": 0.97
+    },
+    {
+      "index": 25,
+      "x": 470,
+      "y": 460,
+      "w": 48,
+      "h": 15,
+      "text": "7308",
+      "conf": 0.97
+    },
+    {
+      "index": 26,
+      "x": 580,
+      "y": 460,
+      "w": 12,
+      "h": 15,
+      "text": "5",
+      "conf": 0.97
+    },
+    {
+      "index": 27,
+      "x": 664,
+      "y": 460,
+      "w": 96,
+      "h": 17,
+      "text": "8,000.00",
+      "conf": 0.62
+    },
+    {
+      "index": 28,
+      "x": 822,
+      "y": 460,
+      "w": 108,
+      "h": 17,
+      "text": "15,000.00",
+      "conf": 0.97
+    },
+    {
+      "index": 29,
+      "x": 579,
+      "y": 516,
+      "w": 138,
+      "h": 15,
+      "text": "Taxable Value",
+      "conf": 0.97
+    },
+    {
+      "index": 30,
+      "x": 822,
+      "y": 516,
+      "w": 108,
+      "h": 17,
+      "text": "40,000.00",
+      "conf": 0.97
+    },
+    {
+      "index": 31,
+      "x": 580,
+      "y": 550,
+      "w": 119,
+      "h": 19,
+      "text": "CGST @ 9%",
+      "conf": 0.97
+    },
+    {
+      "index": 32,
+      "x": 834,
+      "y": 550,
+      "w": 96,
+      "h": 17,
+      "text": "3,600.00",
+      "conf": 0.97
+    },
+    {
+      "index": 33,
+      "x": 580,
+      "y": 584,
+      "w": 118,
+      "h": 19,
+      "text": "SGST @ 9%",
+      "conf": 0.97
+    },
+    {
+      "index": 34,
+      "x": 834,
+      "y": 584,
+      "w": 96,
+      "h": 17,
+      "text": "3,600.00",
+      "conf": 0.97
+    },
+    {
+      "index": 35,
+      "x": 580,
+      "y": 628,
+      "w": 71,
+      "h": 15,
+      "text": "TOTAL",
+      "conf": 0.97
+    },
+    {
+      "index": 36,
+      "x": 822,
+      "y": 628,
+      "w": 108,
+      "h": 17,
+      "text": "47,200.00",
+      "conf": 0.97
+    },
+    {
+      "index": 37,
+      "x": 60,
+      "y": 688,
+      "w": 492,
+      "h": 19,
+      "text": "Rupees Forty Seven Thousand Two Hundred Only",
+      "conf": 0.97
+    },
+    {
+      "index": 38,
+      "x": 60,
+      "y": 737,
+      "w": 484,
+      "h": 15,
+      "text": "Synthetic demo document - parties and GSTINs are not real.",
+      "conf": 0.97
+    }
+  ]
+}

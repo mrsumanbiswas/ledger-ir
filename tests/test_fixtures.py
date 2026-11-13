@@ -87,3 +87,13 @@ def test_token_file_and_image_consistent(invoice_tokens, sample_dir, validate):
     texts = [t["text"] for t in invoice_tokens["tokens"]]
     for expected in ("INV-882", SUPPLIER, BUYER, "40,000.00", "47,200.00"):
         assert any(expected in s for s in texts), expected
+
+
+def test_api_handler_seed_data_in_sync(repo_root, sample_dir):
+    """/demo-seed ships bundled copies of the fixtures; they must be
+    byte-identical to sample_data/ (regenerate via scripts/generate_fixtures.py)."""
+    seed_dir = repo_root / "functions" / "api_handler" / "seed_data"
+    for name in ("invoice_882_flawed.png", "invoice_882_tokens.json",
+                 "gstr2b_oct2026.json", "bank_oct2026.csv"):
+        assert (seed_dir / name).read_bytes() == (sample_dir / name).read_bytes(), \
+            f"{name}: seed_data out of sync with sample_data"

@@ -1,0 +1,227 @@
+{
+  "Comment": "LedgerIR monthly reconciliation: Parallel(per-invoice OCR->compile | load GSTR-2B | load bank CSV) -> Reconcile -> Merkle. Claim-check pattern: states carry S3 keys and tiny summaries only, never document bodies.",
+  "StartAt": "IngestAll",
+  "States": {
+    "IngestAll": {
+      "Type": "Parallel",
+      "ResultPath": "$.ingest",
+      "Branches": [
+        {
+          "StartAt": "PerInvoice",
+          "States": {
+            "PerInvoice": {
+              "Type": "Map",
+              "ItemsPath": "$.invoice_keys",
+              "MaxConcurrency": 5,
+              "ItemSelector": {
+                "tenant_id.$": "$.tenant_id",
+                "period.$": "$.period",
+                "key.$": "$$.Map.Item.Value"
+              },
+              "ItemProcessor": {
+                "ProcessorConfig": { "Mode": "INLINE" },
+                "StartAt": "IsPrecomputedTokens",
+                "States": {
+                  "IsPrecomputedTokens": {
+                    "Type": "Choice",
+                    "Choices": [
+                      {
+                        "Variable": "$.key",
+                        "StringMatches": "*.json",
+                        "Next": "UseKeyAsTokens"
+                      }
+                    ],
+                    "Default": "ExtractTokens"
+                  },
+                  "UseKeyAsTokens": {
+                    "Type": "Pass",
+                    "Parameters": { "tokens_key.$": "$.key" },
+                    "ResultPath": "$.tokens",
+                    "Next": "CompileInvoice"
+                  },
+                  "ExtractTokens": {
+                    "Type": "Task",
+                    "Resource": "${EdgeOcrArn}",
+                    "Parameters": { "key.$": "$.key" },
+                    "ResultPath": "$.tokens",
+                    "Retry": [
+                      {
+                        "ErrorEquals": [
+                          "Lambda.ServiceException",
+                          "Lambda.AWSLambdaException",
+                          "Lambda.SdkClientException",
+                          "Lambda.TooManyRequestsException"
+                        ],
+                        "IntervalSeconds": 2,
+                        "MaxAttempts": 3,
+                        "BackoffRate": 2.0
+                      }
+                    ],
+                    "Next": "CompileInvoice"
+                  },
+                  "CompileInvoice": {
+                    "Type": "Task",
+                    "Resource": "${AstCompilerArn}",
+                    "Parameters": {
+                      "tenant_id.$": "$.tenant_id",
+                      "period.$": "$.period",
+                      "tokens_key.$": "$.tokens.tokens_key"
+                    },
+                    "Retry": [
+                      {
+                        "ErrorEquals": [
+                          "Lambda.ServiceException",
+                          "Lambda.AWSLambdaException",
+                          "Lambda.SdkClientException",
+                          "Lambda.TooManyRequestsException"
+                        ],
+                        "IntervalSeconds": 2,
+                        "MaxAttempts": 3,
+                        "BackoffRate": 2.0
+                      }
+                    ],
+                    "End": true
+                  }
+                }
+              },
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "LoadGstr2b",
+          "States": {
+            "LoadGstr2b": {
+              "Type": "Task",
+              "Resource": "${GraphReconcilerArn}",
+              "Parameters": {
+                "action": "load_gstr2b",
+                "tenant_id.$": "$.tenant_id",
+                "period.$": "$.period",
+                "key.$": "$.gstr2b_key"
+              },
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "Lambda.ServiceException",
+                    "Lambda.AWSLambdaException",
+                    "Lambda.SdkClientException",
+                    "Lambda.TooManyRequestsException"
+                  ],
+                  "IntervalSeconds": 2,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2.0
+                }
+              ],
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "LoadBank",
+          "States": {
+            "LoadBank": {
+              "Type": "Task",
+              "Resource": "${GraphReconcilerArn}",
+              "Parameters": {
+                "action": "load_bank",
+                "tenant_id.$": "$.tenant_id",
+                "period.$": "$.period",
+                "key.$": "$.bank_key"
+              },
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "Lambda.ServiceException",
+                    "Lambda.AWSLambdaException",
+                    "Lambda.SdkClientException",
+                    "Lambda.TooManyRequestsException"
+                  ],
+                  "IntervalSeconds": 2,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2.0
+                }
+              ],
+              "End": true
+            }
+          }
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "ResultPath": "$.error",
+          "Next": "PipelineFailed"
+        }
+      ],
+      "Next": "Reconcile"
+    },
+    "Reconcile": {
+      "Type": "Task",
+      "Resource": "${GraphReconcilerArn}",
+      "Parameters": {
+        "action": "reconcile",
+        "tenant_id.$": "$$.Execution.Input.tenant_id",
+        "period.$": "$$.Execution.Input.period"
+      },
+      "ResultPath": "$.reconcile",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "ResultPath": "$.error",
+          "Next": "PipelineFailed"
+        }
+      ],
+      "Next": "BuildMerkleDossier"
+    },
+    "BuildMerkleDossier": {
+      "Type": "Task",
+      "Resource": "${GraphReconcilerArn}",
+      "Parameters": {
+        "action": "merkle",
+        "tenant_id.$": "$$.Execution.Input.tenant_id",
+        "period.$": "$$.Execution.Input.period"
+      },
+      "ResultPath": "$.merkle",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "ResultPath": "$.error",
+          "Next": "PipelineFailed"
+        }
+      ],
+      "End": true
+    },
+    "PipelineFailed": {
+      "Type": "Fail",
+      "ErrorPath": "$.error.Error",
+      "CausePath": "$.error.Cause"
+    }
+  }
+}
