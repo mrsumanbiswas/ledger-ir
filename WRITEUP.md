@@ -2,8 +2,9 @@
 
 *Submission for the AWS Builder Center Weekend Challenge: "No Pipeline, No Problem".*
 
-**Live demo:** http://ledger-ir-frontendbucket-qjhnf3l9vqvk.s3-website.ap-south-1.amazonaws.com
-— one click, no signup, full results in a few seconds.
+**Live demo:** https://ledgerir.sumanbiswas.in — one click, no signup, full
+results in a few seconds. (The dashboard is hosted on the project's S3 static
+site; the custom domain is a thin HTTPS front on the author's own DNS.)
 
 ## The problem
 

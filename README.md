@@ -4,8 +4,12 @@
 MSMEs** — built for the AWS Builder Center "Weekend Challenge: No Pipeline, No
 Problem" (Nov 2026).
 
-**Live demo:** http://ledger-ir-frontendbucket-qjhnf3l9vqvk.s3-website.ap-south-1.amazonaws.com
-— one click, no signup. **Write-up:** [WRITEUP.md](WRITEUP.md)
+**Live demo:** https://ledgerir.sumanbiswas.in — one click, no signup.
+**Write-up:** [WRITEUP.md](WRITEUP.md)
+
+(The dashboard is hosted on the project's S3 static site; the custom domain is a
+thin HTTPS front on the author's own DNS. The S3 website URL in the stack
+outputs serves the identical page.)
 
 LedgerIR treats messy MSME paperwork — supplier invoice photos, GSTR-2B JSON,
 bank statement CSVs — as **untrusted source code** and runs it through a

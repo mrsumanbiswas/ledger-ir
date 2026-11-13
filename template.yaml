@@ -5,6 +5,18 @@ Description: >
   100% serverless: S3 + DynamoDB + HTTP API + Step Functions + arm64 Lambdas.
   Deployed with `sam build && sam deploy` only (no pipelines).
 
+Parameters:
+  FrontendHostname:
+    Type: String
+    Default: ''
+    Description: >
+      Optional custom hostname for the dashboard (e.g. ledgerir.example.com).
+      When set, the frontend bucket is named exactly this so a Cloudflare
+      proxied CNAME to the S3 website endpoint routes by Host header.
+
+Conditions:
+  HasFrontendHostname: !Not [!Equals [!Ref FrontendHostname, '']]
+
 Globals:
   Function:
     Runtime: python3.12
@@ -56,6 +68,7 @@ Resources:
   FrontendBucket:
     Type: AWS::S3::Bucket
     Properties:
+      BucketName: !If [HasFrontendHostname, !Ref FrontendHostname, !Ref AWS::NoValue]
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         IgnorePublicAcls: true
