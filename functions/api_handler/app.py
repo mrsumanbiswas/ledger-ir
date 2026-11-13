@@ -139,6 +139,23 @@ def _presign(_params: dict, body: dict) -> dict:
     return _response(200, {"upload_url": url, "key": key})
 
 
+def _file(params: dict, _body: dict) -> dict:
+    """Presigned GET for an uploaded document (e.g. the invoice image the
+    dashboard displays). Restricted to the validated uploads/ prefix."""
+    try:
+        tenant, period = _tenant_period(params)
+    except ValueError as exc:
+        return _bad_request(str(exc))
+    name = params.get("name", "")
+    if not _FILENAME_RE.match(name):
+        return _bad_request("invalid name")
+    key = f"uploads/{tenant}/{period}/{name}"
+    url = _s3.generate_presigned_url(
+        "get_object", Params={"Bucket": _DOCS_BUCKET, "Key": key},
+        ExpiresIn=900)
+    return _response(200, {"url": url, "key": key})
+
+
 def _dossier(params: dict, _body: dict) -> dict:
     try:
         tenant, period = _tenant_period(params)
@@ -161,6 +178,7 @@ _ROUTES = {
     ("GET", "/status"): _status,
     ("GET", "/dashboard"): _dashboard,
     ("POST", "/presign"): _presign,
+    ("GET", "/file"): _file,
     ("GET", "/dossier"): _dossier,
 }
 

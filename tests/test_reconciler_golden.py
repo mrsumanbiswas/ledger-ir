@@ -49,7 +49,7 @@ def test_golden_lump_sum_exact_match(gstr2b, bank_entries, validate):
     assert sum(d["sign"] * d["amount_paise"] for d in edge["docs"]) == 9_322_000
     assert edge["edge_id"] == edge_id_ref(
         NEFT_TXN, [("CN-12", -1), ("INV-881", 1), ("INV-883", 1)])
-    assert edge["score"]["counterparty_similarity"] > 0.5
+    assert edge["score"]["counterparty_similarity_bps"] > 5000
     assert 0 <= edge["score"]["max_day_distance"] <= 90
 
 

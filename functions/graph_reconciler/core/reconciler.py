@@ -22,7 +22,7 @@ from itertools import combinations
 TOLERANCE_PAISE = 100
 MAX_SUBSET_SIZE = 5
 MITM_THRESHOLD = 20          # > 20 candidates -> meet-in-the-middle
-SIMILARITY_THRESHOLD = 0.6
+SIMILARITY_THRESHOLD_BPS = 6000
 WINDOW_DAYS = 90
 
 _REQUIRED_COLUMNS = ["txn_id", "value_date", "narration", "mode",
@@ -72,14 +72,16 @@ def parse_bank_csv(text: str) -> list[dict]:
     return entries
 
 
-def counterparty_similarity(narration: str, supplier_name: str) -> float:
-    """Share of the supplier's name words present in the narration (0..1)."""
+def counterparty_similarity_bps(narration: str, supplier_name: str) -> int:
+    """Share of the supplier's name words present in the narration, in integer
+    basis points (0..10000). Integer math keeps every stored value exactly
+    representable, so canonical JSON is byte-identical across languages."""
     def words(s: str) -> set[str]:
         return {w for w in re.split(r"[^A-Z0-9]+", s.upper()) if w}
     sw = words(supplier_name)
     if not sw:
-        return 0.0
-    return len(sw & words(narration)) / len(sw)
+        return 0
+    return len(sw & words(narration)) * 10000 // len(sw)
 
 
 def _canonical(obj) -> bytes:
@@ -169,11 +171,11 @@ def reconcile(docs: list[dict], bank_entries: list[dict]) -> list[dict]:
 
         cands = []
         for doc in pool:
-            sim = counterparty_similarity(entry["narration"],
-                                          doc["supplier_name"])
+            sim = counterparty_similarity_bps(entry["narration"],
+                                              doc["supplier_name"])
             days = abs((entry_date
                         - datetime.date.fromisoformat(doc["inv_date"])).days)
-            if sim >= SIMILARITY_THRESHOLD and days <= WINDOW_DAYS:
+            if sim >= SIMILARITY_THRESHOLD_BPS and days <= WINDOW_DAYS:
                 cands.append((doc, sim, days))
         if not cands:
             continue
@@ -200,8 +202,8 @@ def reconcile(docs: list[dict], bank_entries: list[dict]) -> list[dict]:
             "residual_paise": entry["amount_paise"] - matched,
             "method": method,
             "score": {
-                "counterparty_similarity": round(
-                    min(by_no[d["inv_no"]][1] for d in subset), 4),
+                "counterparty_similarity_bps": min(
+                    by_no[d["inv_no"]][1] for d in subset),
                 "max_day_distance": max(by_no[d["inv_no"]][2] for d in subset),
             },
         })

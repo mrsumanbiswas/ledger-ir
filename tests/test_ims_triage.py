@@ -46,7 +46,7 @@ GOLDEN_EDGE = {
     "matched_amount_paise": 9_322_000,
     "residual_paise": 0,
     "method": "EXACT_SUBSET",
-    "score": {"counterparty_similarity": 1.0, "max_day_distance": 23},
+    "score": {"counterparty_similarity_bps": 10000, "max_day_distance": 23},
 }
 
 

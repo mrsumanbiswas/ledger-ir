@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LedgerIR</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root { color-scheme: dark; }
+  body { background:#020617; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .card { background:#0f172a; border:1px solid #1e293b; border-radius:0.75rem; }
+  details > summary { cursor:pointer; list-style:none; }
+  details > summary::-webkit-details-marker { display:none; }
+  .pulse-dot { animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:.25} 50%{opacity:1} }
+</style>
+</head>
+<body class="text-slate-200 min-h-screen">
+<div class="max-w-6xl mx-auto px-4 py-8">
+
+  <!-- header -->
+  <header class="flex flex-wrap items-center justify-between gap-4 mb-8">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight">
+        <span class="text-emerald-400">Ledger</span>IR
+      </h1>
+      <p class="text-sm text-slate-400">A zero-hallucination financial compiler for Indian MSMEs —
+        every number below is produced by a rule or an equation, never a guess.</p>
+    </div>
+    <div class="flex items-center gap-2 text-xs">
+      <span class="px-2 py-1 rounded bg-slate-800 text-slate-300">ap-south-1</span>
+      <span class="px-2 py-1 rounded bg-slate-800 text-slate-300">100% serverless</span>
+      <span class="px-2 py-1 rounded bg-slate-800 text-slate-300">no LLMs in pipeline</span>
+    </div>
+  </header>
+
+  <!-- run bar -->
+  <section class="card p-5 mb-6">
+    <div class="flex flex-wrap items-center gap-4">
+      <button id="runBtn" onclick="runBatch()"
+        class="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-wait
+               text-slate-950 font-semibold px-5 py-2.5 rounded-lg transition">
+        ▶ Load Sample MSME Batch
+      </button>
+      <div id="runStatus" class="text-sm text-slate-400">
+        Uploads an invoice photo's OCR tokens, a GSTR-2B dump and a bank CSV, then runs
+        the Step Functions pipeline end-to-end.
+      </div>
+    </div>
+    <div id="steps" class="hidden mt-4 flex flex-wrap gap-2 text-xs"></div>
+  </section>
+
+  <div id="results" class="hidden space-y-6">
+
+    <!-- invoice + repair -->
+    <section class="card p-5">
+      <h2 class="font-semibold text-lg mb-1">1 · Invoice compiled from pixels
+        <span id="astBadge"></span></h2>
+      <p class="text-sm text-slate-400 mb-4">OCR tokens are compiled into a typed AST.
+        Statutory invariants either hold, are uniquely repairable (our misread), or
+        condemn the document (supplier's error). The two are never mixed.</p>
+      <div class="grid md:grid-cols-2 gap-5">
+        <div>
+          <img id="invImg" alt="supplier invoice (synthetic)"
+               class="rounded-lg border border-slate-700 w-full bg-white">
+          <p class="text-xs text-slate-500 mt-2">Synthetic demo bill — the digit in line 2's
+            rate is genuinely blurred in the image; OCR read it as “8” at 62% confidence.</p>
+        </div>
+        <div class="space-y-4 text-sm">
+          <div id="astFields" class="grid grid-cols-2 gap-x-4 gap-y-1"></div>
+          <div id="repairPanel"></div>
+          <div id="errorPanel"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- reconciliation -->
+    <section class="card p-5">
+      <h2 class="font-semibold text-lg mb-1">2 · One NEFT, three documents</h2>
+      <p class="text-sm text-slate-400 mb-4">The reconciler searches signed subsets
+        (invoices +, credit notes −) of same-counterparty documents inside a ±90-day
+        window, with deterministic tie-breaking.</p>
+      <div id="matchView"></div>
+    </section>
+
+    <!-- IMS -->
+    <section class="card p-5">
+      <h2 class="font-semibold text-lg mb-1">3 · GST IMS triage &amp; payment guardrail</h2>
+      <p class="text-sm text-slate-400 mb-4">A first-match-wins decision table turns the
+        evidence into statutory IMS actions. Faulty bills get their GST held back before
+        the money leaves.</p>
+      <div id="imsView"></div>
+      <p class="text-xs text-slate-500 mt-3">Wrongly availed &amp; utilised ITC attracts
+        interest at 18% (as notified; statutory ceiling 24%) — catching this bill before
+        filing is the whole point.</p>
+    </section>
+
+    <!-- merkle -->
+    <section class="card p-5">
+      <h2 class="font-semibold text-lg mb-1">4 · Proof-of-cashflow dossier</h2>
+      <p class="text-sm text-slate-400 mb-4">Every record above is hashed into a SHA-256
+        Merkle tree (canonical JSON, leaves sorted by key) and sealed in an
+        Object-Locked S3 bucket. Same books, same root — forever.</p>
+      <div class="flex flex-wrap items-center gap-3 mb-3">
+        <span class="text-xs text-slate-400">MERKLE ROOT</span>
+        <code id="rootHex" class="mono text-emerald-300 text-xs break-all"></code>
+      </div>
+      <div class="flex flex-wrap gap-3 items-center">
+        <button onclick="verifyRoot()" id="verifyBtn"
+          class="bg-slate-800 hover:bg-slate-700 border border-slate-600 px-4 py-2 rounded-lg text-sm">
+          🔍 Re-verify in this browser
+        </button>
+        <a id="dossierLink" target="_blank" rel="noopener"
+           class="hidden bg-slate-800 hover:bg-slate-700 border border-slate-600 px-4 py-2 rounded-lg text-sm">
+          ⬇ Audit dossier (Object-Locked)
+        </a>
+        <span id="verifyResult" class="text-sm"></span>
+      </div>
+      <p class="text-xs text-slate-500 mt-3">“Re-verify” rebuilds every leaf hash from the
+        records rendered on this page (canonical JSON → WebCrypto SHA-256) and recomputes
+        the tree — your browser checks the server's math independently.</p>
+    </section>
+  </div>
+
+  <footer class="mt-10 text-xs text-slate-600">
+    All parties, GSTINs and amounts are synthetic with valid checksums; no real business
+    data appears anywhere. Pipeline: S3 · DynamoDB · HTTP API · Step Functions · arm64 Lambda.
+  </footer>
+</div>
+
+<script>
+const API = "https://j2nk4tg5jl.execute-api.ap-south-1.amazonaws.com";
+const TENANT = "demo", PERIOD = "2026-10";
+const inr = p => "₹" + new Intl.NumberFormat("en-IN",
+  {minimumFractionDigits: 2}).format(p / 100);
+const el = id => document.getElementById(id);
+let DASH = null;
+
+const STEPS = ["Seed uploads", "OCR → Compile", "Load GSTR-2B", "Load bank CSV",
+               "Reconcile", "Merkle dossier"];
+
+function renderSteps(state) { // state: "run" | "done" | "fail"
+  el("steps").classList.remove("hidden");
+  el("steps").innerHTML = STEPS.map(s => {
+    const cls = state === "done" ? "bg-emerald-900/60 text-emerald-300 border-emerald-700"
+              : state === "fail" ? "bg-rose-900/60 text-rose-300 border-rose-700"
+              : "bg-slate-800 text-slate-300 border-slate-600";
+    const dot = state === "run" ? '<span class="pulse-dot">●</span> ' :
+                state === "done" ? "✓ " : "✗ ";
+    return `<span class="px-2 py-1 rounded border ${cls}">${dot}${s}</span>`;
+  }).join("");
+}
+
+async function runBatch() {
+  const btn = el("runBtn");
+  btn.disabled = true;
+  renderSteps("run");
+  el("runStatus").textContent = "Starting Step Functions execution…";
+  const t0 = performance.now();
+  try {
+    const seed = await (await fetch(API + "/demo-seed", {method: "POST"})).json();
+    let status = "RUNNING";
+    while (status === "RUNNING") {
+      await new Promise(r => setTimeout(r, 1200));
+      const s = await (await fetch(API + "/status?execution_arn=" +
+        encodeURIComponent(seed.execution_arn))).json();
+      status = s.status;
+      el("runStatus").textContent =
+        `Execution ${status} · ${((performance.now() - t0) / 1000).toFixed(1)}s elapsed`;
+    }
+    if (status !== "SUCCEEDED") { renderSteps("fail"); btn.disabled = false; return; }
+    renderSteps("done");
+    el("runStatus").textContent =
+      `Pipeline SUCCEEDED in ${((performance.now() - t0) / 1000).toFixed(1)}s — rendering results`;
+    await loadDashboard();
+  } catch (e) {
+    renderSteps("fail");
+    el("runStatus").textContent = "Error: " + e.message;
+  }
+  btn.disabled = false;
+}
+
+async function loadDashboard() {
+  const d = await (await fetch(
+    `${API}/dashboard?tenant_id=${TENANT}&period=${PERIOD}`)).json();
+  if (!d.invoices || !d.invoices.length) return false;
+  DASH = d;
+  el("results").classList.remove("hidden");
+  renderInvoice(d);
+  renderMatch(d);
+  renderIms(d);
+  renderMerkle(d);
+  fetch(`${API}/file?tenant_id=${TENANT}&period=${PERIOD}&name=invoice_882_flawed.png`)
+    .then(r => r.json()).then(f => { if (f.url) el("invImg").src = f.url; });
+  fetch(`${API}/dossier?tenant_id=${TENANT}&period=${PERIOD}`)
+    .then(r => r.json()).then(f => {
+      if (f.dossier_url) { el("dossierLink").href = f.dossier_url;
+        el("dossierLink").classList.remove("hidden"); }});
+  return true;
+}
+
+function badge(text, tone) {
+  const tones = {green: "bg-emerald-900/60 text-emerald-300 border-emerald-700",
+                 amber: "bg-amber-900/60 text-amber-300 border-amber-700",
+                 red: "bg-rose-900/60 text-rose-300 border-rose-700",
+                 slate: "bg-slate-800 text-slate-300 border-slate-600"};
+  return `<span class="px-2 py-0.5 rounded border text-xs align-middle ${tones[tone]}">${text}</span>`;
+}
+
+function renderInvoice(d) {
+  const a = d.invoices[0];
+  el("astBadge").innerHTML = badge(a.status, a.status === "COMPILED" ? "green" : "amber");
+  const rows = [
+    ["Invoice", `${a.inv_no} · ${a.inv_date}`],
+    ["Supplier", `${a.supplier.name} (${a.supplier.state_code})`],
+    ["Buyer", `${a.buyer.name} (${a.buyer.state_code})`],
+    ["Supplier GSTIN", `<span class="mono text-xs">${a.supplier.gstin}</span> ✓ checksum`],
+    ["Taxable", inr(a.taxable_value_paise)],
+    ["Tax as printed", `${a.tax.head.replace("_", "+")} @ ${a.tax.rate_bps / 100}% = ` +
+      inr(a.tax.cgst_paise + a.tax.sgst_paise + a.tax.igst_paise)],
+    ["Total", `<b>${inr(a.total_paise)}</b>`],
+  ];
+  el("astFields").innerHTML = rows.map(([k, v]) =>
+    `<div class="text-slate-500">${k}</div><div>${v}</div>`).join("");
+
+  el("repairPanel").innerHTML = a.repairs.map(r => `
+    <div class="border border-amber-700/60 bg-amber-950/30 rounded-lg p-3">
+      <div class="font-semibold text-amber-300 text-xs mb-2">OCR_REPAIRED — our misread,
+        fixed with a uniqueness proof</div>
+      <div class="mono text-sm">
+        ${r.field} : <span class="line-through text-rose-400">${r.original}</span>
+        → <span class="text-emerald-300">${r.repaired}</span>
+        <span class="text-slate-500 text-xs">(token conf ${r.token_conf})</span>
+      </div>
+      <details class="mt-2">
+        <summary class="text-xs text-amber-400/80 hover:text-amber-300">
+          ▸ show proof: ${r.candidates_tried.length} candidates tried, exactly 1 survived</summary>
+        <table class="mt-2 text-xs w-full">
+          <tr class="text-slate-500 text-left"><th class="pr-3">candidate</th>
+            <th class="pr-3">satisfied</th><th>reason</th></tr>
+          ${r.candidates_tried.map(c => `
+            <tr class="${c.satisfied ? "text-emerald-300" : "text-slate-400"}">
+              <td class="mono pr-3">${c.candidate}</td>
+              <td class="pr-3">${c.satisfied ? "✓" : "✗"}</td>
+              <td>${c.reason}</td></tr>`).join("")}
+        </table>
+        <p class="text-xs text-slate-500 mt-2 mono">${r.constraint_satisfied}</p>
+      </details>
+    </div>`).join("");
+
+  el("errorPanel").innerHTML = a.errors.map(e => `
+    <div class="border border-rose-700/60 bg-rose-950/30 rounded-lg p-3">
+      <div class="font-semibold text-rose-300 text-xs mb-1">SUPPLIER_ERROR — ${e.code}</div>
+      <div class="text-sm text-slate-300">${e.detail}</div>
+      <div class="text-xs text-slate-500 mt-1">A supplier's legal document is never
+        “repaired” — it is flagged and drives the IMS action below.</div>
+    </div>`).join("");
+}
+
+function renderMatch(d) {
+  el("matchView").innerHTML = d.edges.map(e => {
+    const bank = d.bank.find(b => b.txn_id === e.bank_txn_id) || {};
+    return `
+    <div class="grid md:grid-cols-[1fr_auto_1fr] gap-4 items-center">
+      <div class="border border-slate-700 rounded-lg p-3">
+        <div class="text-xs text-slate-500 mb-1">BANK ${bank.mode || ""} DEBIT ·
+          ${bank.value_date || ""}</div>
+        <div class="text-xl font-semibold">${inr(e.matched_amount_paise + e.residual_paise)}</div>
+        <div class="mono text-xs text-slate-500 break-all mt-1">${bank.narration || e.bank_txn_id}</div>
+      </div>
+      <div class="text-center text-2xl text-emerald-400">=</div>
+      <div class="border border-slate-700 rounded-lg p-3 space-y-1">
+        ${e.docs.map(x => `
+          <div class="flex justify-between text-sm">
+            <span>${x.sign > 0 ? "＋" : "−"} ${x.doc_no}
+              <span class="text-slate-500 text-xs">${x.doc_type === "CDN" ? "credit note" : "invoice"}</span></span>
+            <span class="mono">${inr(x.amount_paise)}</span>
+          </div>`).join("")}
+        <div class="border-t border-slate-700 pt-1 flex justify-between text-sm">
+          <span>residual</span>
+          <span>${badge(inr(Math.abs(e.residual_paise)) +
+            (e.residual_paise === 0 ? " · exact" : ""), e.residual_paise === 0 ? "green" : "amber")}</span>
+        </div>
+      </div>
+    </div>
+    <div class="text-xs text-slate-500 mt-3">
+      method ${e.method} · counterparty similarity ${(e.score.counterparty_similarity_bps / 100).toFixed(0)}%
+      · max day distance ${e.score.max_day_distance}d ·
+      edge <span class="mono">${e.edge_id}</span></div>`;
+  }).join("") || '<p class="text-sm text-slate-500">No settlements found.</p>';
+}
+
+function renderIms(d) {
+  const s = d.summary, tone = {AUTO_ACCEPT: "green", AUTO_PENDING: "slate",
+                               HOLD_GST: "amber", REJECT: "red"};
+  const docs = {};
+  d.gstr2b.forEach(r => docs[r.inv_no] = r);
+  el("imsView").innerHTML = `
+    <table class="w-full text-sm">
+      <tr class="text-left text-xs text-slate-500">
+        <th class="py-1">document</th><th>supplier filing</th><th>IMS action</th>
+        <th class="text-right">GST holdback</th></tr>
+      ${Object.entries(s.ims).map(([no, r]) => {
+        const rec = docs[no] || {};
+        return `<tr class="border-t border-slate-800">
+          <td class="py-2">${no} <span class="text-xs text-slate-500">
+            ${rec.doc_type === "CDN" ? "credit note" : "invoice"}</span></td>
+          <td class="mono text-xs">${inr(rec.total_paise || 0)}</td>
+          <td>${badge(r.action, tone[r.action])}
+            <span class="text-xs text-slate-600">rule ${r.rule}</span></td>
+          <td class="text-right mono">${r.holdback_paise ? inr(r.holdback_paise) : "—"}</td>
+        </tr>`;}).join("")}
+      <tr class="border-t border-slate-700 font-semibold">
+        <td class="py-2" colspan="3">Cash protected this month</td>
+        <td class="text-right mono text-amber-300">${inr(s.total_holdback_paise)}</td></tr>
+    </table>`;
+}
+
+function renderMerkle(d) {
+  el("rootHex").textContent = d.summary.merkle_root || "(pending)";
+  el("verifyResult").textContent = "";
+}
+
+/* ---- in-browser Merkle re-verification (WebCrypto) ---- */
+
+function canonical(o) {
+  if (o === null || typeof o !== "object") return JSON.stringify(o);
+  if (Array.isArray(o)) return "[" + o.map(canonical).join(",") + "]";
+  return "{" + Object.keys(o).sort().map(k =>
+    JSON.stringify(k) + ":" + canonical(o[k])).join(",") + "}";
+}
+async function sha256(bytes) {
+  return new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+}
+const enc = new TextEncoder();
+const hex = b => [...b].map(x => x.toString(16).padStart(2, "0")).join("");
+
+async function verifyRoot() {
+  const d = DASH;
+  if (!d || !d.summary.merkle_root) return;
+  const records = [];
+  d.invoices.forEach(a => records.push(["DOC#INV#" + a.inv_no, a]));
+  d.gstr2b.forEach(r => records.push(["DOC#GSTR2B#" + r.inv_no, r]));
+  d.bank.forEach(b => records.push(["DOC#BANK#" + b.txn_id, b]));
+  d.edges.forEach(e => records.push(["MATCH#" + e.edge_id, e]));
+  const {merkle_root, dossier_key, ...summaryPayload} = d.summary;
+  records.push(["SUMMARY#MONTHLY", summaryPayload]);
+  records.sort((a, b) => a[0] < b[0] ? -1 : 1);
+
+  let level = [];
+  for (const [, rec] of records)
+    level.push(await sha256(enc.encode(canonical(rec))));
+  while (level.length > 1) {
+    const next = [];
+    for (let i = 0; i + 1 < level.length; i += 2) {
+      const joined = new Uint8Array(64);
+      joined.set(level[i]); joined.set(level[i + 1], 32);
+      next.push(await sha256(joined));
+    }
+    if (level.length % 2) next.push(level[level.length - 1]);
+    level = next;
+  }
+  const computed = hex(level[0]);
+  const ok = computed === d.summary.merkle_root;
+  el("verifyResult").innerHTML = ok
+    ? badge(`VERIFIED — ${records.length} leaves recomputed locally, roots match`, "green")
+    : badge("MISMATCH — recomputed " + computed.slice(0, 16) + "…", "red");
+}
+
+loadDashboard().catch(() => {});
+</script>
+</body>
+</html>

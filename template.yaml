@@ -146,6 +146,9 @@ Resources:
         Presign:
           Type: HttpApi
           Properties: { ApiId: !Ref HttpApi, Path: /presign, Method: POST }
+        File:
+          Type: HttpApi
+          Properties: { ApiId: !Ref HttpApi, Path: /file, Method: GET }
         Dossier:
           Type: HttpApi
           Properties: { ApiId: !Ref HttpApi, Path: /dossier, Method: GET }

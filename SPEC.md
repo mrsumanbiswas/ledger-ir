@@ -97,8 +97,10 @@ constraint (a low-confidence misread GSTIN with exactly one valid variant is an
 
 ### 1.6 Reconciler
 
-1. Filter bank-entry candidates to the same counterparty (token-similarity on
-   narration vs supplier name) and a **±90-day** window around the document dates.
+1. Filter bank-entry candidates to the same counterparty (token-similarity of
+   narration vs supplier name, computed in integer basis points so stored values
+   are exact — threshold 6000 bps) and a **±90-day** window around the document
+   dates.
 2. Search signed subsets — invoices `+1`, credit notes `−1` — up to **size 5**;
    switch to meet-in-the-middle when > 20 candidate documents.
 3. A match is exact when `|residual_paise| == 0`; acceptable when `≤ 100`.
@@ -387,9 +389,9 @@ in the CSV; the parser converts to integer paise and emits this record:
     "score": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["counterparty_similarity", "max_day_distance"],
+      "required": ["counterparty_similarity_bps", "max_day_distance"],
       "properties": {
-        "counterparty_similarity": { "type": "number", "minimum": 0, "maximum": 1 },
+        "counterparty_similarity_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
         "max_day_distance": { "type": "integer", "minimum": 0 }
       }
     }
