@@ -4,22 +4,17 @@
 MSMEs** — built for the AWS Builder Center "Weekend Challenge: No Pipeline, No
 Problem" (Nov 2026).
 
+**Live demo:** http://ledger-ir-frontendbucket-qjhnf3l9vqvk.s3-website.ap-south-1.amazonaws.com
+— one click, no signup. **Write-up:** [WRITEUP.md](WRITEUP.md)
+
 LedgerIR treats messy MSME paperwork — supplier invoice photos, GSTR-2B JSON,
 bank statement CSVs — as **untrusted source code** and runs it through a
-deterministic compiler pipeline instead of asking a generative model to guess:
-
-```
-invoice photo ──> OCR tokens ──> typed Invoice AST ──> GST rule checks ─┐
-GSTR-2B JSON  ───────────────────────────────────────────────────────── ├─> subset-sum bank
-bank CSV      ───────────────────────────────────────────────────────── ┘   reconciliation
-                                                                             │
-                                               GST IMS triage + payment holds┤
-                                                SHA-256 Merkle audit dossier ┘
-```
-
+deterministic compiler pipeline instead of asking a generative model to guess.
 No LLMs or managed AI APIs anywhere in the pipeline. Every output is explainable
 by a rule or an equation, and every automatic correction ships with a
 machine-checkable proof.
+
+![architecture](architecture.svg)
 
 ## The core ideas
 
@@ -44,10 +39,18 @@ machine-checkable proof.
 
 ## Status
 
-Phase 2 of the build: **spec, golden fixtures, and all pure solvers are
-implemented and tested offline** (57 tests, no AWS dependencies). The serverless
-infrastructure (SAM template, Step Functions pipeline, OCR container Lambda,
-S3-hosted frontend) is the next phase.
+**Deployed and running** in `ap-south-1`: SAM stack (S3, DynamoDB single table,
+HTTP API, Step Functions Standard, arm64 Python 3.12 Lambdas), S3-hosted
+dashboard with in-browser Merkle re-verification, and 58 offline tests. The
+measured Step Functions execution for the monthly demo batch is 0.45–1.07 s.
+
+**OCR status, honestly:** the architecture reserves an arm64 container Lambda
+running `rapidocr-onnxruntime` as a pure spatial tokenizer. In the current
+deployment the demo invoice ships with its precomputed OCR token file (the
+exact format the tokenizer emits, including the deliberate low-confidence
+misread), and the pipeline's Choice state routes `*_tokens.json` around the OCR
+stage; the placeholder OCR Lambda fails loudly rather than pretending.
+Everything downstream of tokens is fully real and running.
 
 - [SPEC.md](SPEC.md) — data contracts (JSON Schemas), domain rules, and the
   golden-sample assertions the tests enforce.

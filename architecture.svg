@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" font-family="ui-sans-serif,system-ui,Segoe UI,Helvetica,Arial" font-size="13">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#64748b"/>
+    </marker>
+    <marker id="arrg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#34d399"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" rx="12" fill="#0f172a"/>
+  <text x="30" y="40" fill="#f1f5f9" font-size="20" font-weight="700">LedgerIR — deterministic reconciliation pipeline</text>
+  <text x="30" y="62" fill="#94a3b8">100% serverless on AWS · ap-south-1 · all Lambdas arm64 Python 3.12 · deployed with a single `sam deploy`</text>
+
+  <!-- inputs -->
+  <g>
+    <rect x="30" y="95" width="175" height="130" rx="10" fill="#1e293b" stroke="#334155"/>
+    <text x="45" y="120" fill="#e2e8f0" font-weight="600">Untrusted inputs</text>
+    <text x="45" y="145" fill="#94a3b8">· invoice photo / tokens</text>
+    <text x="45" y="165" fill="#94a3b8">· GSTR-2B JSON</text>
+    <text x="45" y="185" fill="#94a3b8">· bank statement CSV</text>
+    <text x="45" y="210" fill="#64748b" font-size="11">treated as source code</text>
+  </g>
+
+  <!-- api gw -->
+  <g>
+    <rect x="255" y="95" width="170" height="130" rx="10" fill="#1e293b" stroke="#334155"/>
+    <text x="270" y="120" fill="#e2e8f0" font-weight="600">API Gateway</text>
+    <text x="270" y="138" fill="#94a3b8" font-size="11">HTTP API + Lambda</text>
+    <text x="270" y="160" fill="#94a3b8">/demo-seed · /presign</text>
+    <text x="270" y="180" fill="#94a3b8">/status · /dashboard</text>
+    <text x="270" y="200" fill="#94a3b8">/file · /dossier</text>
+  </g>
+
+  <!-- docs bucket -->
+  <g>
+    <rect x="475" y="95" width="170" height="130" rx="10" fill="#1e293b" stroke="#334155"/>
+    <text x="490" y="120" fill="#e2e8f0" font-weight="600">S3 · documents</text>
+    <text x="490" y="145" fill="#94a3b8">uploads/&lt;tenant&gt;/&lt;period&gt;</text>
+    <text x="490" y="170" fill="#94a3b8">claim-check store:</text>
+    <text x="490" y="188" fill="#94a3b8">states pass keys only,</text>
+    <text x="490" y="205" fill="#94a3b8">never document bodies</text>
+  </g>
+
+  <!-- frontend -->
+  <g>
+    <rect x="695" y="95" width="235" height="130" rx="10" fill="#1e293b" stroke="#334155"/>
+    <text x="710" y="120" fill="#e2e8f0" font-weight="600">S3 static site · dashboard</text>
+    <text x="710" y="145" fill="#94a3b8">one-click batch run + polling</text>
+    <text x="710" y="165" fill="#94a3b8">repair diff with proof viewer</text>
+    <text x="710" y="185" fill="#34d399">WebCrypto re-verifies the</text>
+    <text x="710" y="203" fill="#34d399">Merkle root in the browser</text>
+  </g>
+
+  <!-- step functions container -->
+  <g>
+    <rect x="30" y="265" width="615" height="220" rx="10" fill="#172033" stroke="#3b4a63"/>
+    <text x="45" y="290" fill="#e2e8f0" font-weight="600">Step Functions · Standard workflow</text>
+
+    <rect x="45" y="305" width="280" height="160" rx="8" fill="#1e293b" stroke="#334155"/>
+    <text x="58" y="326" fill="#cbd5e1" font-size="12" font-weight="600">Parallel ingest</text>
+    <rect x="58" y="337" width="254" height="36" rx="6" fill="#0f172a" stroke="#334155"/>
+    <text x="68" y="359" fill="#94a3b8" font-size="12">Map per invoice: OCR → ast_compiler</text>
+    <rect x="58" y="380" width="254" height="30" rx="6" fill="#0f172a" stroke="#334155"/>
+    <text x="68" y="399" fill="#94a3b8" font-size="12">load GSTR-2B records</text>
+    <rect x="58" y="417" width="254" height="30" rx="6" fill="#0f172a" stroke="#334155"/>
+    <text x="68" y="436" fill="#94a3b8" font-size="12">load bank entries</text>
+
+    <rect x="355" y="337" width="130" height="60" rx="8" fill="#1e293b" stroke="#334155"/>
+    <text x="368" y="361" fill="#cbd5e1" font-size="12" font-weight="600">Reconcile</text>
+    <text x="368" y="380" fill="#94a3b8" font-size="11">subset-sum + IMS</text>
+
+    <rect x="505" y="337" width="125" height="60" rx="8" fill="#1e293b" stroke="#334155"/>
+    <text x="518" y="361" fill="#cbd5e1" font-size="12" font-weight="600">Merkle</text>
+    <text x="518" y="380" fill="#94a3b8" font-size="11">SHA-256 dossier</text>
+
+    <line x1="325" y1="367" x2="353" y2="367" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr)"/>
+    <line x1="485" y1="367" x2="503" y2="367" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr)"/>
+    <text x="45" y="475" fill="#64748b" font-size="11">measured: full execution 0.45–1.07 s per monthly batch (3 runs)</text>
+  </g>
+
+  <!-- dynamo -->
+  <g>
+    <rect x="695" y="265" width="235" height="100" rx="10" fill="#1e293b" stroke="#334155"/>
+    <text x="710" y="290" fill="#e2e8f0" font-weight="600">DynamoDB · single table</text>
+    <text x="710" y="313" fill="#94a3b8" font-size="12">PK TENANT#id#YYYY-MM</text>
+    <text x="710" y="331" fill="#94a3b8" font-size="12">DOC#· MATCH#· SUMMARY#</text>
+    <text x="710" y="351" fill="#94a3b8" font-size="11">records stored as canonical JSON</text>
+  </g>
+
+  <!-- dossier -->
+  <g>
+    <rect x="695" y="385" width="235" height="100" rx="10" fill="#1e293b" stroke="#34d399"/>
+    <text x="710" y="410" fill="#e2e8f0" font-weight="600">S3 · audit dossier</text>
+    <text x="710" y="433" fill="#34d399" font-size="12">Object Lock, compliance mode</text>
+    <text x="710" y="451" fill="#94a3b8" font-size="12">tamper-evident Merkle proof</text>
+    <text x="710" y="469" fill="#94a3b8" font-size="11">same books ⇒ same root, always</text>
+  </g>
+
+  <!-- solvers strip -->
+  <g>
+    <rect x="30" y="510" width="900" height="70" rx="10" fill="#172033" stroke="#3b4a63"/>
+    <text x="45" y="532" fill="#e2e8f0" font-weight="600" font-size="12">Pure-Python solver cores (zero AWS imports · 58 offline tests)</text>
+    <text x="45" y="552" fill="#94a3b8" font-size="12">GSTIN mod-36 checksum · algebraic OCR repair with uniqueness proofs · date-aware GST rates · tax-head rule</text>
+    <text x="45" y="570" fill="#94a3b8" font-size="12">signed subset-sum with meet-in-the-middle · IMS decision table · canonical-JSON SHA-256 Merkle tree</text>
+  </g>
+
+  <!-- arrows -->
+  <line x1="205" y1="160" x2="253" y2="160" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="425" y1="160" x2="473" y2="160" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="340" y1="225" x2="340" y2="263" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="200" y="250" fill="#64748b" font-size="11">starts execution</text>
+  <line x1="560" y1="225" x2="560" y2="263" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="572" y="250" fill="#64748b" font-size="11">reads via claim-check keys</text>
+  <line x1="645" y1="315" x2="693" y2="315" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="630" y1="420" x2="693" y2="428" stroke="#34d399" stroke-width="1.5" marker-end="url(#arrg)"/>
+  <line x1="812" y1="263" x2="812" y2="227" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="822" y="248" fill="#64748b" font-size="11">/dashboard</text>
+</svg>
