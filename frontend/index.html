@@ -4,257 +4,374 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LedgerIR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
-  :root { color-scheme: dark; }
-  body { background:#020617; }
-  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-  .card { background:#0f172a; border:1px solid #1e293b; border-radius:0.75rem; }
-  details > summary { cursor:pointer; list-style:none; }
-  details > summary::-webkit-details-marker { display:none; }
-  .pulse-dot { animation: pulse 1.2s ease-in-out infinite; }
-  @keyframes pulse { 0%,100%{opacity:.25} 50%{opacity:1} }
+  :root{
+    --paper:#f6f1e7; --card:#fdfaf3; --ink:#221e19; --faded:#6f675b;
+    --rule:#d9cfbc; --credit:#1a6b45; --debit:#a3332c; --hold:#8a5a10;
+  }
+  html{color-scheme:light}
+  body{background:var(--paper); color:var(--ink);
+       font-family:Inter,ui-sans-serif,system-ui,sans-serif;}
+  .serif{font-family:Fraunces,Georgia,serif;}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,monospace;}
+  .card{background:var(--card); border:1px solid var(--rule);
+        border-radius:4px; box-shadow:0 1px 0 var(--rule);}
+  .ledger-row{border-bottom:1px dashed var(--rule);}
+  .stamp{display:inline-block; border:2px solid currentColor; border-radius:3px;
+         padding:1px 8px; font-weight:600; font-size:.68rem; letter-spacing:.1em;
+         text-transform:uppercase; transform:rotate(-1.5deg);}
+  .actnum{font-family:Fraunces,serif; font-size:2.6rem; line-height:1;
+          color:var(--rule); font-weight:700;}
+  .btn{background:var(--ink); color:var(--card); font-weight:600;
+       padding:.65rem 1.25rem; border-radius:3px;}
+  .btn:hover{background:#3b352d}
+  .btn:disabled{opacity:.5; cursor:wait}
+  .btn2{border:1.5px solid var(--ink); font-weight:600; padding:.6rem 1.2rem;
+        border-radius:3px;}
+  .btn2:hover{background:#eee8da}
+  input[type=month],input[type=file]{background:var(--card);
+        border:1px solid var(--rule); border-radius:3px; padding:.35rem .5rem;
+        font-size:.85rem; width:100%;}
+  details>summary{cursor:pointer; list-style:none}
+  details>summary::-webkit-details-marker{display:none}
+  .pulse{animation:pulse 1.2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.25}50%{opacity:1}}
+  .amt{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums;}
 </style>
 </head>
-<body class="text-slate-200 min-h-screen">
-<div class="max-w-6xl mx-auto px-4 py-8">
+<body>
+<div class="max-w-5xl mx-auto px-4 py-10">
 
-  <!-- header -->
-  <header class="flex flex-wrap items-center justify-between gap-4 mb-8">
-    <div>
-      <h1 class="text-2xl font-bold tracking-tight">
-        <span class="text-emerald-400">Ledger</span>IR
-      </h1>
-      <p class="text-sm text-slate-400">A zero-hallucination financial compiler for Indian MSMEs —
-        every number below is produced by a rule or an equation, never a guess.</p>
-    </div>
-    <div class="flex items-center gap-2 text-xs">
-      <span class="px-2 py-1 rounded bg-slate-800 text-slate-300">ap-south-1</span>
-      <span class="px-2 py-1 rounded bg-slate-800 text-slate-300">100% serverless</span>
-      <span class="px-2 py-1 rounded bg-slate-800 text-slate-300">no LLMs in pipeline</span>
+  <!-- masthead -->
+  <header class="mb-10">
+    <div class="flex flex-wrap items-end justify-between gap-4 border-b-2 pb-5"
+         style="border-color:var(--ink)">
+      <div>
+        <h1 class="serif text-5xl font-bold tracking-tight">LedgerIR</h1>
+        <p class="mt-2 text-sm" style="color:var(--faded)">
+          The books, compiled. — a zero-hallucination financial compiler for Indian MSMEs.
+          No AI in the pipeline; every number is a rule or an equation, every fix a proof.</p>
+      </div>
+      <div class="flex gap-2 text-[11px] uppercase tracking-wider" style="color:var(--faded)">
+        <span class="border px-2 py-1" style="border-color:var(--rule)">ap-south-1</span>
+        <span class="border px-2 py-1" style="border-color:var(--rule)">serverless</span>
+        <span class="border px-2 py-1" style="border-color:var(--rule)">deterministic</span>
+      </div>
     </div>
   </header>
 
-  <!-- run bar -->
-  <section class="card p-5 mb-6">
-    <div class="flex flex-wrap items-center gap-4">
-      <button id="runBtn" onclick="runBatch()"
-        class="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-wait
-               text-slate-950 font-semibold px-5 py-2.5 rounded-lg transition">
-        ▶ Load Sample MSME Batch
-      </button>
-      <div id="runStatus" class="text-sm text-slate-400">
-        Uploads an invoice photo's OCR tokens, a GSTR-2B dump and a bank CSV, then runs
-        the Step Functions pipeline end-to-end.
-      </div>
+  <!-- run panel -->
+  <section class="grid md:grid-cols-2 gap-5 mb-8">
+    <div class="card p-5">
+      <h2 class="serif text-xl font-semibold">The sample batch</h2>
+      <p class="text-sm mt-1 mb-4" style="color:var(--faded)">
+        One synthetic October: a bill with a blurred digit <i>and</i> a wrong tax head,
+        a GSTR-2B dump, and one lump-sum NEFT. Thirty seconds, no signup.</p>
+      <button id="runBtn" class="btn" onclick="runSample()">Run the sample batch</button>
     </div>
-    <div id="steps" class="hidden mt-4 flex flex-wrap gap-2 text-xs"></div>
+    <div class="card p-5">
+      <h2 class="serif text-xl font-semibold">Your own books
+        <span class="text-xs font-normal mono" style="color:var(--faded)" id="wsId"></span></h2>
+      <p class="text-sm mt-1 mb-3" style="color:var(--faded)">
+        A private workspace lives in this browser — your uploads land in your own
+        partition and never mix with anyone else's.</p>
+      <div class="grid grid-cols-2 gap-2 text-xs mb-2">
+        <label>Month<input type="month" id="ownPeriod" value="2026-10"></label>
+        <label>Invoice tokens (*_tokens.json, optional)<input type="file" id="fInv" accept=".json"></label>
+        <label>GSTR-2B JSON<input type="file" id="fG2b" accept=".json"></label>
+        <label>Bank CSV<input type="file" id="fBank" accept=".csv"></label>
+      </div>
+      <button id="runOwnBtn" class="btn2" onclick="runOwn()">Compile my batch</button>
+    </div>
   </section>
 
-  <div id="results" class="hidden space-y-6">
+  <div id="runStatus" class="text-sm mb-2" style="color:var(--faded)"></div>
+  <div id="steps" class="hidden mb-8 flex flex-wrap gap-2 text-xs"></div>
 
-    <!-- invoice + repair -->
-    <section class="card p-5">
-      <h2 class="font-semibold text-lg mb-1">1 · Invoice compiled from pixels
-        <span id="astBadge"></span></h2>
-      <p class="text-sm text-slate-400 mb-4">OCR tokens are compiled into a typed AST.
-        Statutory invariants either hold, are uniquely repairable (our misread), or
-        condemn the document (supplier's error). The two are never mixed.</p>
-      <div class="grid md:grid-cols-2 gap-5">
+  <div id="results" class="hidden space-y-8">
+
+    <section class="card p-6">
+      <div class="flex gap-4 items-start">
+        <div class="actnum">01</div>
         <div>
-          <img id="invImg" alt="supplier invoice (synthetic)"
-               class="rounded-lg border border-slate-700 w-full bg-white">
-          <p class="text-xs text-slate-500 mt-2">Synthetic demo bill — the digit in line 2's
-            rate is genuinely blurred in the image; OCR read it as “8” at 62% confidence.</p>
+          <h2 class="serif text-2xl font-semibold">Compilation <span id="astBadge"></span></h2>
+          <p class="text-sm mt-1" style="color:var(--faded)">
+            OCR tokens become a typed invoice AST. Broken invariants are either our
+            misread — repaired only when <b>exactly one</b> candidate satisfies every
+            equation — or the supplier's legal error, which is never altered.</p>
+        </div>
+      </div>
+      <div class="grid md:grid-cols-2 gap-6 mt-5">
+        <div id="imgWrap">
+          <img id="invImg" alt="supplier invoice (synthetic)" class="w-full border"
+               style="border-color:var(--rule)" onerror="this.closest('#imgWrap').style.display='none'">
+          <p class="text-xs mt-2" style="color:var(--faded)">The rate digit in line 2 is
+            genuinely blurred; OCR read “8” at 62% confidence.</p>
         </div>
         <div class="space-y-4 text-sm">
-          <div id="astFields" class="grid grid-cols-2 gap-x-4 gap-y-1"></div>
+          <div id="astFields" class="grid grid-cols-[auto_1fr] gap-x-5 gap-y-1"></div>
           <div id="repairPanel"></div>
           <div id="errorPanel"></div>
         </div>
       </div>
     </section>
 
-    <!-- reconciliation -->
-    <section class="card p-5">
-      <h2 class="font-semibold text-lg mb-1">2 · One NEFT, three documents</h2>
-      <p class="text-sm text-slate-400 mb-4">The reconciler searches signed subsets
-        (invoices +, credit notes −) of same-counterparty documents inside a ±90-day
-        window, with deterministic tie-breaking.</p>
+    <section class="card p-6">
+      <div class="flex gap-4 items-start mb-5">
+        <div class="actnum">02</div>
+        <div>
+          <h2 class="serif text-2xl font-semibold">Settlement</h2>
+          <p class="text-sm mt-1" style="color:var(--faded)">
+            Lump-sum payments are untangled by signed subset-sum search — invoices plus,
+            credit notes minus — with deterministic tie-breaking.</p>
+        </div>
+      </div>
       <div id="matchView"></div>
     </section>
 
-    <!-- IMS -->
-    <section class="card p-5">
-      <h2 class="font-semibold text-lg mb-1">3 · GST IMS triage &amp; payment guardrail</h2>
-      <p class="text-sm text-slate-400 mb-4">A first-match-wins decision table turns the
-        evidence into statutory IMS actions. Faulty bills get their GST held back before
-        the money leaves.</p>
+    <section class="card p-6">
+      <div class="flex gap-4 items-start mb-5">
+        <div class="actnum">03</div>
+        <div>
+          <h2 class="serif text-2xl font-semibold">Verdicts</h2>
+          <p class="text-sm mt-1" style="color:var(--faded)">
+            A first-match-wins decision table issues statutory IMS actions; a faulty
+            bill has its GST held back before the money leaves.</p>
+        </div>
+      </div>
       <div id="imsView"></div>
-      <p class="text-xs text-slate-500 mt-3">Wrongly availed &amp; utilised ITC attracts
-        interest at 18% (as notified; statutory ceiling 24%) — catching this bill before
-        filing is the whole point.</p>
+      <p class="text-xs mt-3" style="color:var(--faded)">Wrongly availed &amp; utilised
+        ITC attracts interest at 18% (as notified; statutory ceiling 24%).</p>
     </section>
 
-    <!-- merkle -->
-    <section class="card p-5">
-      <h2 class="font-semibold text-lg mb-1">4 · Proof-of-cashflow dossier</h2>
-      <p class="text-sm text-slate-400 mb-4">Every record above is hashed into a SHA-256
-        Merkle tree (canonical JSON, leaves sorted by key) and sealed in an
-        Object-Locked S3 bucket. Same books, same root — forever.</p>
-      <div class="flex flex-wrap items-center gap-3 mb-3">
-        <span class="text-xs text-slate-400">MERKLE ROOT</span>
-        <code id="rootHex" class="mono text-emerald-300 text-xs break-all"></code>
+    <section class="card p-6">
+      <div class="flex gap-4 items-start mb-4">
+        <div class="actnum">04</div>
+        <div>
+          <h2 class="serif text-2xl font-semibold">The seal</h2>
+          <p class="text-sm mt-1" style="color:var(--faded)">
+            Every record above is hashed into a SHA-256 Merkle tree and sealed under
+            S3 Object Lock. Same books, same root — forever.</p>
+        </div>
       </div>
+      <div class="mb-3"><span class="text-xs uppercase tracking-wider"
+        style="color:var(--faded)">Merkle root&nbsp;</span>
+        <code id="rootHex" class="mono text-xs break-all" style="color:var(--credit)"></code></div>
       <div class="flex flex-wrap gap-3 items-center">
-        <button onclick="verifyRoot()" id="verifyBtn"
-          class="bg-slate-800 hover:bg-slate-700 border border-slate-600 px-4 py-2 rounded-lg text-sm">
-          🔍 Re-verify in this browser
-        </button>
+        <button class="btn2 text-sm" onclick="verifyRoot()">Re-verify in this browser</button>
         <a id="dossierLink" target="_blank" rel="noopener"
-           class="hidden bg-slate-800 hover:bg-slate-700 border border-slate-600 px-4 py-2 rounded-lg text-sm">
-          ⬇ Audit dossier (Object-Locked)
-        </a>
-        <span id="verifyResult" class="text-sm"></span>
+           class="hidden btn2 text-sm">Audit dossier ⬇</a>
+        <span id="verifyResult"></span>
       </div>
-      <p class="text-xs text-slate-500 mt-3">“Re-verify” rebuilds every leaf hash from the
-        records rendered on this page (canonical JSON → WebCrypto SHA-256) and recomputes
-        the tree — your browser checks the server's math independently.</p>
+      <p class="text-xs mt-3" style="color:var(--faded)">“Re-verify” rebuilds every leaf
+        hash from the records on this page (canonical JSON → WebCrypto SHA-256) and
+        recomputes the tree — your browser checks the server's math independently.</p>
     </section>
   </div>
 
-  <footer class="mt-10 text-xs text-slate-600">
-    All parties, GSTINs and amounts are synthetic with valid checksums; no real business
-    data appears anywhere. Pipeline: S3 · DynamoDB · HTTP API · Step Functions · arm64 Lambda.
+  <footer class="mt-12 pt-4 border-t text-xs" style="border-color:var(--rule); color:var(--faded)">
+    Sample parties, GSTINs and amounts are synthetic with valid checksums; no real
+    business data. S3 · DynamoDB · HTTP API · Step Functions · arm64 Lambda — one
+    <span class="mono">sam deploy</span>, no pipeline.
   </footer>
 </div>
 
 <script>
 const API = "/api";  // same-origin; the edge proxy forwards to API Gateway
-const TENANT = "demo", PERIOD = "2026-10";
 const inr = p => "₹" + new Intl.NumberFormat("en-IN",
   {minimumFractionDigits: 2}).format(p / 100);
 const el = id => document.getElementById(id);
-let DASH = null;
+let DASH = null, VIEW = {tenant: "demo", period: "2026-10"};
 
-const STEPS = ["Seed uploads", "OCR → Compile", "Load GSTR-2B", "Load bank CSV",
-               "Reconcile", "Merkle dossier"];
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+};
+function workspaceId() {
+  let ws = store.get("ledgerir_ws");
+  if (!ws || !/^ws-[a-z0-9]{8}$/.test(ws)) {
+    const b = crypto.getRandomValues(new Uint8Array(4));
+    ws = "ws-" + [...b].map(x => x.toString(16).padStart(2, "0")).join("");
+    store.set("ledgerir_ws", ws);
+  }
+  return ws;
+}
+el("wsId").textContent = "· " + workspaceId();
 
-function renderSteps(state) { // state: "run" | "done" | "fail"
+const STEPS = ["Upload", "Compile invoices", "Load GSTR-2B", "Load bank",
+               "Reconcile", "Seal"];
+function renderSteps(state) {
   el("steps").classList.remove("hidden");
   el("steps").innerHTML = STEPS.map(s => {
-    const cls = state === "done" ? "bg-emerald-900/60 text-emerald-300 border-emerald-700"
-              : state === "fail" ? "bg-rose-900/60 text-rose-300 border-rose-700"
-              : "bg-slate-800 text-slate-300 border-slate-600";
-    const dot = state === "run" ? '<span class="pulse-dot">●</span> ' :
+    const color = state === "done" ? "var(--credit)" :
+                  state === "fail" ? "var(--debit)" : "var(--faded)";
+    const dot = state === "run" ? '<span class="pulse">●</span> ' :
                 state === "done" ? "✓ " : "✗ ";
-    return `<span class="px-2 py-1 rounded border ${cls}">${dot}${s}</span>`;
+    return `<span class="border px-2 py-1" style="border-color:var(--rule);color:${color}">${dot}${s}</span>`;
   }).join("");
 }
 
-async function runBatch() {
-  const btn = el("runBtn");
-  btn.disabled = true;
-  renderSteps("run");
-  el("runStatus").textContent = "Starting Step Functions execution…";
+async function pollExecution(arn, t0) {
+  let status = "RUNNING";
+  while (status === "RUNNING") {
+    await new Promise(r => setTimeout(r, 1200));
+    const s = await (await fetch(API + "/status?execution_arn=" +
+      encodeURIComponent(arn))).json();
+    status = s.status;
+    el("runStatus").textContent =
+      `Execution ${status} · ${((performance.now() - t0) / 1000).toFixed(1)}s`;
+  }
+  return status;
+}
+
+async function finishRun(status, t0) {
+  if (status !== "SUCCEEDED") {
+    renderSteps("fail");
+    el("runStatus").textContent += " — the pipeline rejected this batch " +
+      "(malformed file or failed compile). Fix the input and retry.";
+    return;
+  }
+  renderSteps("done");
+  el("runStatus").textContent =
+    `Compiled & sealed in ${((performance.now() - t0) / 1000).toFixed(1)}s`;
+  store.set("ledgerir_view", JSON.stringify(VIEW));
+  await loadDashboard();
+}
+
+async function runSample() {
+  const btn = el("runBtn"); btn.disabled = true;
+  renderSteps("run"); el("runStatus").textContent = "Starting…";
   const t0 = performance.now();
   try {
     const seed = await (await fetch(API + "/demo-seed", {method: "POST"})).json();
-    let status = "RUNNING";
-    while (status === "RUNNING") {
-      await new Promise(r => setTimeout(r, 1200));
-      const s = await (await fetch(API + "/status?execution_arn=" +
-        encodeURIComponent(seed.execution_arn))).json();
-      status = s.status;
-      el("runStatus").textContent =
-        `Execution ${status} · ${((performance.now() - t0) / 1000).toFixed(1)}s elapsed`;
-    }
-    if (status !== "SUCCEEDED") { renderSteps("fail"); btn.disabled = false; return; }
-    renderSteps("done");
+    VIEW = {tenant: seed.tenant_id, period: seed.period};
+    await finishRun(await pollExecution(seed.execution_arn, t0), t0);
+  } catch (e) { renderSteps("fail"); el("runStatus").textContent = "Error: " + e.message; }
+  btn.disabled = false;
+}
+
+async function upload(tenant, period, file) {
+  const pre = await (await fetch(API + "/presign", {method: "POST",
+    headers: {"content-type": "application/json"},
+    body: JSON.stringify({tenant_id: tenant, period, filename: file.name})})).json();
+  if (!pre.upload_url) throw new Error(pre.error || "presign failed");
+  const put = await fetch(pre.upload_url, {method: "PUT", body: file});
+  if (!put.ok) throw new Error("upload failed for " + file.name);
+  return pre.key;
+}
+
+async function runOwn() {
+  const btn = el("runOwnBtn"); btn.disabled = true;
+  const tenant = workspaceId(), period = el("ownPeriod").value;
+  const g2b = el("fG2b").files[0], bank = el("fBank").files[0],
+        inv = el("fInv").files[0];
+  if (!/^\d{4}-\d{2}$/.test(period) || !g2b || !bank) {
     el("runStatus").textContent =
-      `Pipeline SUCCEEDED in ${((performance.now() - t0) / 1000).toFixed(1)}s — rendering results`;
-    await loadDashboard();
-  } catch (e) {
-    renderSteps("fail");
-    el("runStatus").textContent = "Error: " + e.message;
+      "Pick a month and attach at least the GSTR-2B JSON and bank CSV.";
+    btn.disabled = false; return;
   }
+  renderSteps("run"); el("runStatus").textContent = "Uploading to your workspace…";
+  const t0 = performance.now();
+  try {
+    const body = {tenant_id: tenant, period,
+                  gstr2b_key: await upload(tenant, period, g2b),
+                  bank_key: await upload(tenant, period, bank),
+                  invoice_keys: inv ? [await upload(tenant, period, inv)] : []};
+    const run = await (await fetch(API + "/run", {method: "POST",
+      headers: {"content-type": "application/json"},
+      body: JSON.stringify(body)})).json();
+    if (!run.execution_arn) throw new Error(run.error || "run refused");
+    VIEW = {tenant, period};
+    await finishRun(await pollExecution(run.execution_arn, t0), t0);
+  } catch (e) { renderSteps("fail"); el("runStatus").textContent = "Error: " + e.message; }
   btn.disabled = false;
 }
 
 async function loadDashboard() {
   const d = await (await fetch(
-    `${API}/dashboard?tenant_id=${TENANT}&period=${PERIOD}`)).json();
-  if (!d.invoices || !d.invoices.length) return false;
+    `${API}/dashboard?tenant_id=${VIEW.tenant}&period=${VIEW.period}`)).json();
+  if (!d.gstr2b || !d.gstr2b.length) return false;
   DASH = d;
   el("results").classList.remove("hidden");
-  renderInvoice(d);
-  renderMatch(d);
-  renderIms(d);
-  renderMerkle(d);
-  fetch(`${API}/file?tenant_id=${TENANT}&period=${PERIOD}&name=invoice_882_flawed.png`)
-    .then(r => r.json()).then(f => { if (f.url) el("invImg").src = f.url; });
-  fetch(`${API}/dossier?tenant_id=${TENANT}&period=${PERIOD}`)
+  renderInvoice(d); renderMatch(d); renderIms(d); renderMerkle(d);
+  el("imgWrap").style.display = "";
+  el("invImg").removeAttribute("src");
+  fetch(`${API}/file?tenant_id=${VIEW.tenant}&period=${VIEW.period}&name=invoice_882_flawed.png`)
+    .then(r => r.json()).then(f => {
+      if (f.url && VIEW.tenant === "demo") el("invImg").src = f.url;
+      else el("imgWrap").style.display = "none"; });
+  el("dossierLink").classList.add("hidden");
+  fetch(`${API}/dossier?tenant_id=${VIEW.tenant}&period=${VIEW.period}`)
     .then(r => r.json()).then(f => {
       if (f.dossier_url) { el("dossierLink").href = f.dossier_url;
         el("dossierLink").classList.remove("hidden"); }});
   return true;
 }
 
-function badge(text, tone) {
-  const tones = {green: "bg-emerald-900/60 text-emerald-300 border-emerald-700",
-                 amber: "bg-amber-900/60 text-amber-300 border-amber-700",
-                 red: "bg-rose-900/60 text-rose-300 border-rose-700",
-                 slate: "bg-slate-800 text-slate-300 border-slate-600"};
-  return `<span class="px-2 py-0.5 rounded border text-xs align-middle ${tones[tone]}">${text}</span>`;
-}
+const stamp = (text, color) =>
+  `<span class="stamp" style="color:${color}">${text}</span>`;
+const TONE = {AUTO_ACCEPT: "var(--credit)", AUTO_PENDING: "var(--faded)",
+              HOLD_GST: "var(--hold)", REJECT: "var(--debit)"};
 
 function renderInvoice(d) {
   const a = d.invoices[0];
-  el("astBadge").innerHTML = badge(a.status, a.status === "COMPILED" ? "green" : "amber");
+  if (!a) {
+    el("astBadge").innerHTML = "";
+    el("astFields").innerHTML = `<div style="color:var(--faded)" class="col-span-2">
+      No invoice image/tokens in this batch — compilation skipped; the 2B and bank
+      records below still reconcile.</div>`;
+    el("repairPanel").innerHTML = el("errorPanel").innerHTML = "";
+    el("imgWrap").style.display = "none";
+    return;
+  }
+  el("astBadge").innerHTML = stamp(a.status,
+    a.status === "COMPILED" ? "var(--credit)" : "var(--hold)");
   const rows = [
     ["Invoice", `${a.inv_no} · ${a.inv_date}`],
     ["Supplier", `${a.supplier.name} (${a.supplier.state_code})`],
     ["Buyer", `${a.buyer.name} (${a.buyer.state_code})`],
-    ["Supplier GSTIN", `<span class="mono text-xs">${a.supplier.gstin}</span> ✓ checksum`],
-    ["Taxable", inr(a.taxable_value_paise)],
+    ["GSTIN", `<span class="mono text-xs">${a.supplier.gstin}</span> ✓`],
+    ["Taxable", `<span class="amt">${inr(a.taxable_value_paise)}</span>`],
     ["Tax as printed", `${a.tax.head.replace("_", "+")} @ ${a.tax.rate_bps / 100}% = ` +
-      inr(a.tax.cgst_paise + a.tax.sgst_paise + a.tax.igst_paise)],
-    ["Total", `<b>${inr(a.total_paise)}</b>`],
+      `<span class="amt">${inr(a.tax.cgst_paise + a.tax.sgst_paise + a.tax.igst_paise)}</span>`],
+    ["Total", `<b class="amt">${inr(a.total_paise)}</b>`],
   ];
   el("astFields").innerHTML = rows.map(([k, v]) =>
-    `<div class="text-slate-500">${k}</div><div>${v}</div>`).join("");
+    `<div style="color:var(--faded)">${k}</div><div>${v}</div>`).join("");
 
   el("repairPanel").innerHTML = a.repairs.map(r => `
-    <div class="border border-amber-700/60 bg-amber-950/30 rounded-lg p-3">
-      <div class="font-semibold text-amber-300 text-xs mb-2">OCR_REPAIRED — our misread,
-        fixed with a uniqueness proof</div>
-      <div class="mono text-sm">
-        ${r.field} : <span class="line-through text-rose-400">${r.original}</span>
-        → <span class="text-emerald-300">${r.repaired}</span>
-        <span class="text-slate-500 text-xs">(token conf ${r.token_conf})</span>
-      </div>
+    <div class="border p-3" style="border-color:var(--hold)">
+      <div class="text-xs mb-2">${stamp("OCR repaired", "var(--hold)")}
+        <span style="color:var(--faded)">our misread, fixed with a uniqueness proof</span></div>
+      <div class="mono text-sm">${r.field}:
+        <span class="line-through" style="color:var(--debit)">${r.original}</span>
+        → <span style="color:var(--credit)">${r.repaired}</span>
+        <span class="text-xs" style="color:var(--faded)">(conf ${r.token_conf})</span></div>
       <details class="mt-2">
-        <summary class="text-xs text-amber-400/80 hover:text-amber-300">
-          ▸ show proof: ${r.candidates_tried.length} candidates tried, exactly 1 survived</summary>
+        <summary class="text-xs underline" style="color:var(--faded)">
+          proof — ${r.candidates_tried.length} candidates tried, exactly 1 survived</summary>
         <table class="mt-2 text-xs w-full">
-          <tr class="text-slate-500 text-left"><th class="pr-3">candidate</th>
-            <th class="pr-3">satisfied</th><th>reason</th></tr>
           ${r.candidates_tried.map(c => `
-            <tr class="${c.satisfied ? "text-emerald-300" : "text-slate-400"}">
-              <td class="mono pr-3">${c.candidate}</td>
+            <tr class="ledger-row" style="color:${c.satisfied ? "var(--credit)" : "var(--faded)"}">
+              <td class="mono pr-3 py-1">${c.candidate}</td>
               <td class="pr-3">${c.satisfied ? "✓" : "✗"}</td>
               <td>${c.reason}</td></tr>`).join("")}
         </table>
-        <p class="text-xs text-slate-500 mt-2 mono">${r.constraint_satisfied}</p>
+        <p class="text-xs mono mt-2" style="color:var(--faded)">${r.constraint_satisfied}</p>
       </details>
     </div>`).join("");
 
   el("errorPanel").innerHTML = a.errors.map(e => `
-    <div class="border border-rose-700/60 bg-rose-950/30 rounded-lg p-3">
-      <div class="font-semibold text-rose-300 text-xs mb-1">SUPPLIER_ERROR — ${e.code}</div>
-      <div class="text-sm text-slate-300">${e.detail}</div>
-      <div class="text-xs text-slate-500 mt-1">A supplier's legal document is never
-        “repaired” — it is flagged and drives the IMS action below.</div>
+    <div class="border p-3" style="border-color:var(--debit)">
+      <div class="text-xs mb-1">${stamp("Supplier error", "var(--debit)")}
+        <span class="mono">${e.code}</span></div>
+      <div class="text-sm">${e.detail}</div>
+      <div class="text-xs mt-1" style="color:var(--faded)">A supplier's legal document
+        is never “repaired” — it is flagged and drives the verdicts below.</div>
     </div>`).join("");
 }
 
@@ -263,67 +380,63 @@ function renderMatch(d) {
     const bank = d.bank.find(b => b.txn_id === e.bank_txn_id) || {};
     return `
     <div class="grid md:grid-cols-[1fr_auto_1fr] gap-4 items-center">
-      <div class="border border-slate-700 rounded-lg p-3">
-        <div class="text-xs text-slate-500 mb-1">BANK ${bank.mode || ""} DEBIT ·
-          ${bank.value_date || ""}</div>
-        <div class="text-xl font-semibold">${inr(e.matched_amount_paise + e.residual_paise)}</div>
-        <div class="mono text-xs text-slate-500 break-all mt-1">${bank.narration || e.bank_txn_id}</div>
+      <div class="border p-3" style="border-color:var(--rule)">
+        <div class="text-xs mb-1" style="color:var(--faded)">BANK ${bank.mode || ""}
+          DEBIT · ${bank.value_date || ""}</div>
+        <div class="text-2xl amt font-semibold">${inr(e.matched_amount_paise + e.residual_paise)}</div>
+        <div class="mono text-xs break-all mt-1" style="color:var(--faded)">${bank.narration || e.bank_txn_id}</div>
       </div>
-      <div class="text-center text-2xl text-emerald-400">=</div>
-      <div class="border border-slate-700 rounded-lg p-3 space-y-1">
+      <div class="serif text-3xl text-center" style="color:var(--credit)">=</div>
+      <div class="border p-3" style="border-color:var(--rule)">
         ${e.docs.map(x => `
-          <div class="flex justify-between text-sm">
+          <div class="flex justify-between text-sm ledger-row py-1">
             <span>${x.sign > 0 ? "＋" : "−"} ${x.doc_no}
-              <span class="text-slate-500 text-xs">${x.doc_type === "CDN" ? "credit note" : "invoice"}</span></span>
-            <span class="mono">${inr(x.amount_paise)}</span>
-          </div>`).join("")}
-        <div class="border-t border-slate-700 pt-1 flex justify-between text-sm">
+              <span class="text-xs" style="color:var(--faded)">${x.doc_type === "CDN" ? "credit note" : "invoice"}</span></span>
+            <span class="amt">${inr(x.amount_paise)}</span></div>`).join("")}
+        <div class="flex justify-between text-sm pt-2">
           <span>residual</span>
-          <span>${badge(inr(Math.abs(e.residual_paise)) +
-            (e.residual_paise === 0 ? " · exact" : ""), e.residual_paise === 0 ? "green" : "amber")}</span>
-        </div>
+          ${stamp(inr(Math.abs(e.residual_paise)) + (e.residual_paise === 0 ? " · exact" : ""),
+                  e.residual_paise === 0 ? "var(--credit)" : "var(--hold)")}</div>
       </div>
     </div>
-    <div class="text-xs text-slate-500 mt-3">
-      method ${e.method} · counterparty similarity ${(e.score.counterparty_similarity_bps / 100).toFixed(0)}%
-      · max day distance ${e.score.max_day_distance}d ·
-      edge <span class="mono">${e.edge_id}</span></div>`;
-  }).join("") || '<p class="text-sm text-slate-500">No settlements found.</p>';
+    <div class="text-xs mt-3" style="color:var(--faded)">
+      ${e.method} · counterparty ${(e.score.counterparty_similarity_bps / 100).toFixed(0)}%
+      · ≤${e.score.max_day_distance}d · edge <span class="mono">${e.edge_id}</span></div>`;
+  }).join("") || `<p class="text-sm" style="color:var(--faded)">No settlements found
+      in this batch — nothing in the bank statement matched these documents.</p>`;
 }
 
 function renderIms(d) {
-  const s = d.summary, tone = {AUTO_ACCEPT: "green", AUTO_PENDING: "slate",
-                               HOLD_GST: "amber", REJECT: "red"};
+  const s = d.summary || {ims: {}, total_holdback_paise: 0};
   const docs = {};
   d.gstr2b.forEach(r => docs[r.inv_no] = r);
   el("imsView").innerHTML = `
     <table class="w-full text-sm">
-      <tr class="text-left text-xs text-slate-500">
-        <th class="py-1">document</th><th>supplier filing</th><th>IMS action</th>
-        <th class="text-right">GST holdback</th></tr>
+      <tr class="text-left text-xs uppercase tracking-wider" style="color:var(--faded)">
+        <th class="py-1 font-medium">document</th><th class="font-medium">supplier filing</th>
+        <th class="font-medium">verdict</th><th class="text-right font-medium">GST holdback</th></tr>
       ${Object.entries(s.ims).map(([no, r]) => {
         const rec = docs[no] || {};
-        return `<tr class="border-t border-slate-800">
-          <td class="py-2">${no} <span class="text-xs text-slate-500">
+        return `<tr class="ledger-row">
+          <td class="py-2">${no} <span class="text-xs" style="color:var(--faded)">
             ${rec.doc_type === "CDN" ? "credit note" : "invoice"}</span></td>
-          <td class="mono text-xs">${inr(rec.total_paise || 0)}</td>
-          <td>${badge(r.action, tone[r.action])}
-            <span class="text-xs text-slate-600">rule ${r.rule}</span></td>
-          <td class="text-right mono">${r.holdback_paise ? inr(r.holdback_paise) : "—"}</td>
+          <td class="amt text-xs">${inr(rec.total_paise || 0)}</td>
+          <td>${stamp(r.action.replace("_", " "), TONE[r.action])}
+            <span class="text-xs" style="color:var(--faded)">rule ${r.rule}</span></td>
+          <td class="text-right amt">${r.holdback_paise ? inr(r.holdback_paise) : "—"}</td>
         </tr>`;}).join("")}
-      <tr class="border-t border-slate-700 font-semibold">
+      <tr class="font-semibold">
         <td class="py-2" colspan="3">Cash protected this month</td>
-        <td class="text-right mono text-amber-300">${inr(s.total_holdback_paise)}</td></tr>
+        <td class="text-right amt" style="color:var(--hold)">${inr(s.total_holdback_paise)}</td></tr>
     </table>`;
 }
 
 function renderMerkle(d) {
-  el("rootHex").textContent = d.summary.merkle_root || "(pending)";
+  el("rootHex").textContent = (d.summary && d.summary.merkle_root) || "(pending)";
   el("verifyResult").textContent = "";
 }
 
 /* ---- in-browser Merkle re-verification (WebCrypto) ---- */
-
 function canonical(o) {
   if (o === null || typeof o !== "object") return JSON.stringify(o);
   if (Array.isArray(o)) return "[" + o.map(canonical).join(",") + "]";
@@ -338,7 +451,7 @@ const hex = b => [...b].map(x => x.toString(16).padStart(2, "0")).join("");
 
 async function verifyRoot() {
   const d = DASH;
-  if (!d || !d.summary.merkle_root) return;
+  if (!d || !d.summary || !d.summary.merkle_root) return;
   const records = [];
   d.invoices.forEach(a => records.push(["DOC#INV#" + a.inv_no, a]));
   d.gstr2b.forEach(r => records.push(["DOC#GSTR2B#" + r.inv_no, r]));
@@ -347,7 +460,6 @@ async function verifyRoot() {
   const {merkle_root, dossier_key, ...summaryPayload} = d.summary;
   records.push(["SUMMARY#MONTHLY", summaryPayload]);
   records.sort((a, b) => a[0] < b[0] ? -1 : 1);
-
   let level = [];
   for (const [, rec] of records)
     level.push(await sha256(enc.encode(canonical(rec))));
@@ -364,10 +476,15 @@ async function verifyRoot() {
   const computed = hex(level[0]);
   const ok = computed === d.summary.merkle_root;
   el("verifyResult").innerHTML = ok
-    ? badge(`VERIFIED — ${records.length} leaves recomputed locally, roots match`, "green")
-    : badge("MISMATCH — recomputed " + computed.slice(0, 16) + "…", "red");
+    ? stamp(`verified — ${records.length} leaves recomputed locally`, "var(--credit)")
+    : stamp("mismatch — " + computed.slice(0, 16) + "…", "var(--debit)");
 }
 
+try {
+  const saved = JSON.parse(store.get("ledgerir_view") || "null");
+  if (saved && /^[a-z0-9-]{1,32}$/.test(saved.tenant)
+      && /^\d{4}-\d{2}$/.test(saved.period)) VIEW = saved;
+} catch {}
 loadDashboard().catch(() => {});
 </script>
 </body>

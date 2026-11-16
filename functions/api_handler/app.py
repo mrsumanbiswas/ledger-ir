@@ -145,6 +145,46 @@ def _presign(_params: dict, body: dict) -> dict:
     return _response(200, {"upload_url": url, "key": key})
 
 
+def _run(_params: dict, body: dict) -> dict:
+    """Start a pipeline execution over files the caller uploaded via /presign.
+
+    Every key must sit under the caller's own validated uploads/<tenant>/<period>/
+    prefix; the GSTR-2B and bank objects must exist before we start."""
+    try:
+        tenant, period = _tenant_period(body)
+    except ValueError as exc:
+        return _bad_request(str(exc))
+    prefix = f"uploads/{tenant}/{period}/"
+
+    def valid_key(key) -> bool:
+        return (isinstance(key, str) and key.startswith(prefix)
+                and _FILENAME_RE.match(key[len(prefix):]) is not None)
+
+    invoice_keys = body.get("invoice_keys", [])
+    gstr2b_key, bank_key = body.get("gstr2b_key"), body.get("bank_key")
+    if (not isinstance(invoice_keys, list) or len(invoice_keys) > 10
+            or not all(valid_key(k) for k in invoice_keys)
+            or not valid_key(gstr2b_key) or not valid_key(bank_key)):
+        return _bad_request("invalid or missing document keys")
+    if not all(k.endswith(".json") for k in invoice_keys):
+        return _bad_request("invoices must be *_tokens.json until the OCR "
+                            "container ships")
+    for key in [gstr2b_key, bank_key, *invoice_keys]:
+        try:
+            _s3.head_object(Bucket=_DOCS_BUCKET, Key=key)
+        except Exception:
+            return _bad_request(f"uploaded file not found: {key[len(prefix):]}")
+
+    execution = _sfn.start_execution(
+        stateMachineArn=_STATE_MACHINE_ARN,
+        name=f"{tenant}-{period}-{uuid.uuid4().hex[:8]}",
+        input=json.dumps({"tenant_id": tenant, "period": period,
+                          "invoice_keys": invoice_keys,
+                          "gstr2b_key": gstr2b_key, "bank_key": bank_key}))
+    return _response(200, {"execution_arn": execution["executionArn"],
+                           "tenant_id": tenant, "period": period})
+
+
 def _file(params: dict, _body: dict) -> dict:
     """Presigned GET for an uploaded document (e.g. the invoice image the
     dashboard displays). Restricted to the validated uploads/ prefix."""
@@ -184,6 +224,7 @@ _ROUTES = {
     ("GET", "/status"): _status,
     ("GET", "/dashboard"): _dashboard,
     ("POST", "/presign"): _presign,
+    ("POST", "/run"): _run,
     ("GET", "/file"): _file,
     ("GET", "/dossier"): _dossier,
 }
