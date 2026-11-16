@@ -57,6 +57,11 @@ misread), and the pipeline's Choice state routes `*_tokens.json` around the OCR
 stage; the placeholder OCR Lambda fails loudly rather than pretending.
 Everything downstream of tokens is fully real and running.
 
+**Bring your own books:** besides the sample batch, the dashboard gives every
+visitor a private per-browser workspace (`ws-<hex>` tenant) — upload your own
+GSTR-2B JSON and bank CSV (+ optional invoice tokens) and the pipeline compiles
+your batch in your own isolated partition with its own sealed Merkle root.
+
 **Security posture:** the API accepts only requests carrying a shared secret
 injected by the site's edge proxy (fail-closed, constant-time compare), so
 every route is reachable solely through https://ledgerir.sumanbiswas.in; CORS

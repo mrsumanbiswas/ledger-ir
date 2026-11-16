@@ -77,6 +77,12 @@ three runs):
    money leaves.
 4. The Merkle root appears with a **"Re-verify in this browser"** button.
 
+And it isn't demo-only: the **"Your own books"** panel gives every visitor a
+private per-browser workspace — upload your own GSTR-2B JSON and bank CSV
+(plus optional invoice tokens), and the same pipeline compiles *your* batch in
+your own isolated partition, sealed under its own Merkle root. Uploads are
+locked server-side to each workspace's own prefix.
+
 ## Architecture
 
 ![architecture](architecture.svg)
