@@ -15,8 +15,15 @@ from pathlib import Path
 
 import boto3
 from boto3.dynamodb.conditions import Key
+from botocore.config import Config
 
-_s3 = boto3.client("s3")
+# Presigned URLs must live on the regional endpoint: the page's CSP pins the
+# bucket hosts, and the default client can sign for the global s3.amazonaws.com.
+_s3 = boto3.client(
+    "s3",
+    endpoint_url=f"https://s3.{os.environ['AWS_REGION']}.amazonaws.com",
+    config=Config(signature_version="s3v4",
+                  s3={"addressing_style": "virtual"}))
 _sfn = boto3.client("stepfunctions")
 _table = boto3.resource("dynamodb").Table(os.environ["TABLE_NAME"])
 _DOCS_BUCKET = os.environ["DOCS_BUCKET"]
